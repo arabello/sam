@@ -1,0 +1,22 @@
+subprojects {
+    apply plugin: 'scala'
+
+    repositories {
+        mavenCentral()
+    }
+
+    dependencies {
+        compile 'org.scala-lang:scala-library:2.12.8'
+        testCompile 'junit:junit:4.11'
+        testCompile 'org.scalatest:scalatest_2.10:1.9.1'
+    }
+
+    version = '0.0.1'
+
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.forkOptions.with {
+            memoryMaximumSize = '1g'
+            jvmArgs = ['-XX:MaxPermSize=512m']
+        }
+    }
+}
