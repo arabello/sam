@@ -1,2 +1,12 @@
 version '0.0.1'
 
+dependencies{
+    implementation 'org.scala-lang:scala-reflect:2.12.8'
+
+    task copyTestResources(type: Copy) {
+        from "src/test/resources"
+        into "out/test/resources"
+    }
+    processTestResources.dependsOn copyTestResources
+}
+
