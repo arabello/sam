@@ -2,12 +2,21 @@ package io.sam.core.ReflectSpec
 
 
 import java.io._
+import java.net.URL
+import java.nio.charset.Charset
+import java.nio.file.Files
 
+import com.sun.org.apache.bcel.internal.classfile.SourceFile
 import io.sam.core.{ComponentCode, Factory, InvalidSourceCode, SourceCode}
 import org.scalatest.FlatSpec
 
+import scala.io.Source
+import scala.reflect.io._
 import scala.reflect.runtime.universe
 import scala.reflect.runtime.universe._
+import scala.tools.nsc._
+import scala.tools.nsc.reporters.StoreReporter
+import scala.tools.nsc.util.BatchSourceFile
 import scala.tools.reflect.ToolBox
 
 class ReflectSpec extends FlatSpec{
@@ -15,15 +24,42 @@ class ReflectSpec extends FlatSpec{
 	val resPath = "core/out/test/resources"
 
 	"ToolBox" should "parse packages" in{
-		val toolbox = runtimeMirror(getClass.getClassLoader).mkToolBox()
 
 		val content =
-			"""package io.core{
+			"""package io.core
 			  | trait Test{}
-			  |}""".stripMargin
+			  |""".stripMargin
 
+		val toolbox = runtimeMirror(getClass.getClassLoader).mkToolBox()
 		val ast = toolbox.parse(content)
 		toolbox.typecheck(ast)
+	}
+
+	"nsc" should "works" in{
+
+		val content =
+			"""package io.core
+			  | trait Test{}
+			  |""".stripMargin
+
+		val path = s"$resPath/T.scala"
+		new PrintWriter(path) { write(content); close() }
+
+		val settings = new Settings
+		settings.embeddedDefaults(getClass.getClassLoader)
+		settings.usejavacp.value = true
+		val reporter = new StoreReporter
+		val compiler: Global = new Global(settings, reporter)
+		val run = new compiler.Run()
+		compiler.phase = run.parserPhase
+		run.cancel()
+
+		val code  = AbstractFile.getFile(path)
+		val bfs = new BatchSourceFile(code,code.toCharArray)
+
+		val tree = compiler.newUnitParser(content).parse()
+
+		println(showRaw(tree))
 	}
 
 	"Traverser" should "catch abstract classes" in{
