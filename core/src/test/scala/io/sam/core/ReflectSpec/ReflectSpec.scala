@@ -2,38 +2,17 @@ package io.sam.core.ReflectSpec
 
 
 import java.io._
-import java.net.URL
-import java.nio.charset.Charset
-import java.nio.file.Files
 
-import com.sun.org.apache.bcel.internal.classfile.SourceFile
-import io.sam.core.{ComponentCode, Factory, InvalidSourceCode, SourceCode}
+import io.sam.core._
 import org.scalatest.FlatSpec
 
-import scala.io.Source
-import scala.reflect.io._
-import scala.reflect.runtime.universe
-import scala.reflect.runtime.universe._
-import scala.tools.nsc._
-import scala.tools.nsc.reporters.StoreReporter
-import scala.tools.nsc.util.BatchSourceFile
-import scala.tools.reflect.ToolBox
+import scala.reflect.runtime.universe.showRaw
 
 class ReflectSpec extends FlatSpec{
 
 	val resPath = "core/out/test/resources"
 
-	"ToolBox" should "parse packages" in{
 
-		val content =
-			"""package io.core
-			  | trait Test{}
-			  |""".stripMargin
-
-		val toolbox = runtimeMirror(getClass.getClassLoader).mkToolBox()
-		val ast = toolbox.parse(content)
-		toolbox.typecheck(ast)
-	}
 
 	"nsc" should "works" in{
 
@@ -45,44 +24,36 @@ class ReflectSpec extends FlatSpec{
 		val path = s"$resPath/T.scala"
 		new PrintWriter(path) { write(content); close() }
 
-		val settings = new Settings
-		settings.embeddedDefaults(getClass.getClassLoader)
-		settings.usejavacp.value = true
-		val reporter = new StoreReporter
-		val compiler: Global = new Global(settings, reporter)
-		val run = new compiler.Run()
-		compiler.phase = run.parserPhase
-		run.cancel()
+		val ast = Parse.fromCode(Factory.fromFile(path))
 
-		val code  = AbstractFile.getFile(path)
-		val bfs = new BatchSourceFile(code,code.toCharArray)
-
-		val tree = compiler.newUnitParser(content).parse()
-
-		println(showRaw(tree))
+		println(showRaw(ast))
 	}
 
 	"Traverser" should "catch abstract classes" in{
-		val toolbox: ToolBox[universe.type] = runtimeMirror(getClass.getClassLoader).mkToolBox()
-
-		val content = "trait Test{}\nabstract class Test2{}"
-
-		val ast: toolbox.u.Tree = toolbox.parse(content)
-
-		object traverser extends Traverser {
+		object traverser {
 			var n_abstracts = 0
-			override def traverse(tree: Tree): Unit = tree match {
-				case node @ ClassDef(modifiers, name, parameters, impl) =>
+			def traverse(tree:  Parse.syntaxAnalyzer.global.Tree): Unit = tree match {
+				case ClassDef(modifiers, name, parameters, impl, _, _) =>
 					if (modifiers.hasFlag(Flag.ABSTRACT))
 						n_abstracts += 1
 				case _ =>
-					super.traverse(tree)
+					traverse(tree)
 			}
 		}
 
-		traverser.traverse(ast)
+		val content =
+			"""package io.core
+			  | trait T{}
+			  | abstract class A{}
+			  |""".stripMargin
 
-		assert(traverser.n_abstracts == 2)
+		val ast = Parse.fromString(content)
+
+		println(showRaw(ast))
+
+		traverser.traverse(ast) // TODO find a way to traverse syntaxAnalyzer.global.Tree
+
+		//assert(traverser.n_abstracts == 2)
 	}
 
 	"Factory" should "create Code from file" in{
