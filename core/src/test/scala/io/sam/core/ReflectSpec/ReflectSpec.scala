@@ -8,45 +8,63 @@ import io.sam.core.Analyzer._
 import org.scalatest.FlatSpec
 
 import scala.io.Source
-import scala.reflect.runtime.universe
-import scala.tools.reflect.ToolBox
 
 class ReflectSpec extends FlatSpec{
 
 	val resPath = "core/out/test/resources"
 
-	"ToolBox" should "works" in{
+	/////////////////////
+	///// Traverser /////
+	/////////////////////
 
-		val content =
-			"""package io.core
-			  | trait Test{}
-			  |""".stripMargin
+	"Traverser" should "traverse abstract classes" in{
 
-		val toolbox = universe.runtimeMirror(getClass.getClassLoader).mkToolBox()
-
-	}
-
-	"Traverser" should "catch abstract classes" in{
-
-		val sc = Analyzer.mkSourceCode("~", """package io.core
-								  | trait T{}
-								  | abstract class A{}
-								  |""".stripMargin)
+		val sc = Analyzer.mkSourceCode("~", "package io.core \n trait T{\ntrait T2{}} \n abstract class A{}\n object O{}")
 
 		var n_abstracts = 0
 		object traverser extends Analyzer.Traverser {
 			override def traverse(tree: Analyzer.Tree): Unit = tree match {
-				case ClassDef(mods, _, _, _) =>
-					if (mods.hasFlag(Flag.ABSTRACT)) n_abstracts += 1
+				case node @  ClassDef(mods, name, tparams, impl) =>
+					if (mods.hasFlag(Flag.ABSTRACT))
+						n_abstracts += 1
+					super.traverseTrees(tparams)
+					super.traverse(impl)
 				case _ => super.traverse(tree)
 			}
 		}
 
 		val ast = Analyzer.parseCode(sc)
+
 		traverser.traverse(ast)
 
-		assert(n_abstracts == 2)
+		assert(n_abstracts == 3)
 	}
+
+	it should "traverse object (singleton)" in{
+
+		val sc = Analyzer.mkSourceCode("~", "package io.core \n object O{\nobject O2{}} \n abstract class A{}")
+
+		var n_object = 0
+		object traverser extends Analyzer.Traverser {
+			override def traverse(tree: Analyzer.Tree): Unit = tree match {
+				case ModuleDef(mods, name, impl) =>
+					n_object += 1
+
+					super.traverse(impl)
+				case _ => super.traverse(tree)
+			}
+		}
+
+		val ast = Analyzer.parseCode(sc)
+
+		traverser.traverse(ast)
+
+		assert(n_object == 2)
+	}
+
+	////////////////////
+	///// Entities /////
+	////////////////////
 
 	"Entities" should "create SourceCode from file" in{
 		val expectedContent = "abstract class A{}"
@@ -59,14 +77,14 @@ class ReflectSpec extends FlatSpec{
 			case _ => fail()
 		}
 
-		Analyzer.mkSourceCode("invalid", "invalid path") match {
+		Analyzer.mkSourceCodeFromFile("invalid path") match {
 			case isc @ InvalidSourceCode (_) =>
 				assert(isc.codeContent.isEmpty)
 			case _ => fail()
 		}
 	}
 
-	"Entities" should "create Module from multiple files" in{
+	it should "create Module from multiple files" in{
 
 		var files = Map[String, String]()
 		files += ("A" -> "abstract class A{}")

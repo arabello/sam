@@ -10,7 +10,7 @@ trait Entities {
 	abstract class Code(id: String) extends HasCode
 
 	case class SourceCode(id: String, source: Source) extends Code(id) {
-		override val codeContent: String = source.getLines().mkString
+		override val codeContent: String = source.mkString
 	}
 
 	case class Module(id: String, sources: Set[Code]) extends Code(id) {
@@ -25,7 +25,7 @@ trait Entities {
 		override val codeContent: String = ""
 	}
 
-	def mkSourceCode(id: String, source: String): Code = SourceCode(id, Source.fromString(source))
+	def mkSourceCode(id: String, content: String): Code = SourceCode(id, Source.fromString(content))
 
 	def mkSourceCode(id: String, source: Source): Code = SourceCode(id, source)
 
