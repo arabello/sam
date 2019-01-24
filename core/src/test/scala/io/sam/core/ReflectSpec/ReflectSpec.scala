@@ -4,77 +4,69 @@ package io.sam.core.ReflectSpec
 import java.io._
 
 import io.sam.core._
+import io.sam.core.Analyzer._
 import org.scalatest.FlatSpec
 
-import scala.reflect.runtime.universe.showRaw
+import scala.io.Source
+import scala.reflect.runtime.universe
+import scala.tools.reflect.ToolBox
 
 class ReflectSpec extends FlatSpec{
 
 	val resPath = "core/out/test/resources"
 
-
-
-	"nsc" should "works" in{
+	"ToolBox" should "works" in{
 
 		val content =
 			"""package io.core
 			  | trait Test{}
 			  |""".stripMargin
 
-		val path = s"$resPath/T.scala"
-		new PrintWriter(path) { write(content); close() }
+		val toolbox = universe.runtimeMirror(getClass.getClassLoader).mkToolBox()
 
-		val ast = Parse.fromCode(Factory.fromFile(path))
-
-		println(showRaw(ast))
 	}
 
 	"Traverser" should "catch abstract classes" in{
-		object traverser {
-			var n_abstracts = 0
-			def traverse(tree:  Parse.syntaxAnalyzer.global.Tree): Unit = tree match {
-				case ClassDef(modifiers, name, parameters, impl, _, _) =>
-					if (modifiers.hasFlag(Flag.ABSTRACT))
-						n_abstracts += 1
-				case _ =>
-					traverse(tree)
+
+		val sc = Analyzer.mkSourceCode("~", """package io.core
+								  | trait T{}
+								  | abstract class A{}
+								  |""".stripMargin)
+
+		var n_abstracts = 0
+		object traverser extends Analyzer.Traverser {
+			override def traverse(tree: Analyzer.Tree): Unit = tree match {
+				case ClassDef(mods, _, _, _) =>
+					if (mods.hasFlag(Flag.ABSTRACT)) n_abstracts += 1
+				case _ => super.traverse(tree)
 			}
 		}
 
-		val content =
-			"""package io.core
-			  | trait T{}
-			  | abstract class A{}
-			  |""".stripMargin
+		val ast = Analyzer.parseCode(sc)
+		traverser.traverse(ast)
 
-		val ast = Parse.fromString(content)
-
-		println(showRaw(ast))
-
-		traverser.traverse(ast) // TODO find a way to traverse syntaxAnalyzer.global.Tree
-
-		//assert(traverser.n_abstracts == 2)
+		assert(n_abstracts == 2)
 	}
 
-	"Factory" should "create Code from file" in{
+	"Entities" should "create SourceCode from file" in{
 		val expectedContent = "abstract class A{}"
 		val path = s"$resPath/A.scala"
 		new PrintWriter(path) { write(expectedContent); close() }
 
-		Factory.fromFile(path) match {
+		Analyzer.mkSourceCode(path, Source.fromFile(path)) match {
 			case sc @ SourceCode (_, _) =>
-				assert(sc.code == expectedContent)
+				assert(sc.codeContent == expectedContent)
 			case _ => fail()
 		}
 
-		Factory.fromFile("invalid") match {
-			case InvalidSourceCode (_) =>
-				assert(true)
+		Analyzer.mkSourceCode("invalid", "invalid path") match {
+			case isc @ InvalidSourceCode (_) =>
+				assert(isc.codeContent.isEmpty)
 			case _ => fail()
 		}
 	}
 
-	"Factory" should "create Code (Component) from multiple files" in{
+	"Entities" should "create Module from multiple files" in{
 
 		var files = Map[String, String]()
 		files += ("A" -> "abstract class A{}")
@@ -86,11 +78,11 @@ class ReflectSpec extends FlatSpec{
 			new PrintWriter(pathA) { write(content); close() }
 		}
 
-		Factory.fromFolder(resPath) match {
-			case cc @ ComponentCode(_, _) =>
-				assert(cc.code.contains(files("A")))
-				assert(cc.code.contains(files("C")))
-				assert(cc.code.contains(files("T")))
+		Analyzer.mkModuleFromFolder(resPath) match {
+			case cc @ Module(_, _) =>
+				assert(cc.codeContent.contains(files("A")))
+				assert(cc.codeContent.contains(files("C")))
+				assert(cc.codeContent.contains(files("T")))
 		}
 	}
 }
