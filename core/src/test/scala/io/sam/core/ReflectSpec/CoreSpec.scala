@@ -3,13 +3,13 @@ package io.sam.core.ReflectSpec
 
 import java.io._
 
-import io.sam.core._
 import io.sam.core.Analyzer._
+import io.sam.core._
 import org.scalatest.FlatSpec
 
 import scala.io.Source
 
-class ReflectSpec extends FlatSpec{
+class CoreSpec extends FlatSpec{
 
 	val resPath = "core/out/test/resources"
 
@@ -19,7 +19,7 @@ class ReflectSpec extends FlatSpec{
 
 	"Traverser" should "traverse abstract classes" in{
 
-		val sc = Analyzer.mkSourceCode("~", "package io.core \n trait T{\ntrait T2{}} \n abstract class A{}\n object O{}")
+		val sc = SourceCode("~", Source.fromString("package io.core \n trait T{\ntrait T2{}} \n abstract class A{}\n object O{}"))
 
 		var n_abstracts = 0
 		object traverser extends Analyzer.Traverser {
@@ -42,7 +42,7 @@ class ReflectSpec extends FlatSpec{
 
 	it should "traverse object (singleton)" in{
 
-		val sc = Analyzer.mkSourceCode("~", "package io.core \n object O{\nobject O2{}} \n abstract class A{}")
+		val sc = SourceCode("~", Source.fromString("package io.core \n object O{\nobject O2{}} \n abstract class A{}"))
 
 		var n_object = 0
 		object traverser extends Analyzer.Traverser {
@@ -71,15 +71,15 @@ class ReflectSpec extends FlatSpec{
 		val path = s"$resPath/A.scala"
 		new PrintWriter(path) { write(expectedContent); close() }
 
-		Analyzer.mkSourceCode(path, Source.fromFile(path)) match {
+		SourceCode(path, Source.fromFile(path)) match {
 			case sc @ SourceCode (_, _) =>
-				assert(sc.codeContent == expectedContent)
+				assert(sc.content == expectedContent)
 			case _ => fail()
 		}
 
-		Analyzer.mkSourceCodeFromFile("invalid path") match {
+		Helper.mkSourceCodeFromFile("invalid path") match {
 			case isc @ InvalidSourceCode (_) =>
-				assert(isc.codeContent.isEmpty)
+				assert(isc.content.isEmpty)
 			case _ => fail()
 		}
 	}
@@ -96,11 +96,11 @@ class ReflectSpec extends FlatSpec{
 			new PrintWriter(pathA) { write(content); close() }
 		}
 
-		Analyzer.mkModuleFromFolder(resPath) match {
+		Helper.mkModuleFromFolder(resPath) match {
 			case cc @ Module(_, _) =>
-				assert(cc.codeContent.contains(files("A")))
-				assert(cc.codeContent.contains(files("C")))
-				assert(cc.codeContent.contains(files("T")))
+				assert(cc.content.contains(files("A")))
+				assert(cc.content.contains(files("C")))
+				assert(cc.content.contains(files("T")))
 		}
 	}
 }
