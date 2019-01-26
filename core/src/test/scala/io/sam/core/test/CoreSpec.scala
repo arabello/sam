@@ -1,4 +1,4 @@
-package io.sam.core.ReflectSpec
+package io.sam.core.test
 
 
 import java.io._
@@ -17,14 +17,14 @@ class CoreSpec extends FlatSpec{
 	///// Traverser /////
 	/////////////////////
 
-	"Traverser" should "traverse abstract classes" in{
+	"Traverser" should "reads abstract classes" in{
 
 		val sc = SourceCode("~", Source.fromString("package io.core \n trait T{\ntrait T2{}} \n abstract class A{}\n object O{}"))
 
 		var n_abstracts = 0
 		object traverser extends Analyzer.Traverser {
 			override def traverse(tree: Analyzer.Tree): Unit = tree match {
-				case node @  ClassDef(mods, name, tparams, impl) =>
+				case  ClassDef(mods, name, tparams, impl) =>
 					if (mods.hasFlag(Flag.ABSTRACT))
 						n_abstracts += 1
 					super.traverseTrees(tparams)
@@ -40,7 +40,46 @@ class CoreSpec extends FlatSpec{
 		assert(n_abstracts == 3)
 	}
 
-	it should "traverse object (singleton)" in{
+	it should "reads PackageDef" in{
+		val sb = StringBuilder.newBuilder
+
+		object packageTraverser extends Analyzer.Traverser{
+			override def traverse(tree: Analyzer.Tree) = tree match {
+				case Analyzer.PackageDef(pid, stats) =>
+					sb.append(pid.toString()+"\n")
+					super.traverseTrees(stats)
+					super.traverse(pid)
+				case _ => super.traverse(tree)
+			}
+		}
+
+		val ast = Analyzer.parse("package io.pck.a\ntrait A{}\npackage io.pck.b\ntrait B{}")
+		packageTraverser.traverse(ast)
+
+		val results = sb.mkString
+		assert(results.contains("io.pck.a\n") && results.contains("io.pck.b\n"))
+	}
+
+	it should "reads ImportDef" in{
+		val sb = StringBuilder.newBuilder
+
+		object packageTraverser extends Analyzer.Traverser{
+			override def traverse(tree: Analyzer.Tree) = tree match {
+				case Analyzer.Import(expr, selectors) =>
+					sb.append(expr+"\n")
+					super.traverse(expr)
+				case _ => super.traverse(tree)
+			}
+		}
+
+		val ast = Analyzer.parse("package io.pck.a\nimport io.pck.b.A\nimport io.pck.b._\nimport io.pck.{h => A}\ntrait A{}")
+		packageTraverser.traverse(ast)
+
+		val results = sb.mkString
+		assert(results == "io.pck.b\nio.pck.b\nio.pck\n")
+	}
+
+	it should "reads module def (object)" in{
 
 		val sc = SourceCode("~", Source.fromString("package io.core \n object O{\nobject O2{}} \n abstract class A{}"))
 

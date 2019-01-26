@@ -1,4 +1,4 @@
-package io.sam.core.ReflectSpec
+package io.sam.core.test
 
 import java.io.File
 import java.nio.file.{Files, Paths}
