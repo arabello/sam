@@ -1,4 +1,5 @@
 rootProject.name = 'sam'
 include 'core'
 include 'main'
+include 'domain'
 
