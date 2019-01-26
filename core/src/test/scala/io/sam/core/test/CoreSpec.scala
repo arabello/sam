@@ -43,7 +43,7 @@ class CoreSpec extends FlatSpec{
 	it should "reads PackageDef" in{
 		val sb = StringBuilder.newBuilder
 
-		object packageTraverser extends Analyzer.Traverser{
+		object traverser extends Analyzer.Traverser{
 			override def traverse(tree: Analyzer.Tree) = tree match {
 				case Analyzer.PackageDef(pid, stats) =>
 					sb.append(pid.toString()+"\n")
@@ -54,16 +54,36 @@ class CoreSpec extends FlatSpec{
 		}
 
 		val ast = Analyzer.parse("package io.pck.a\ntrait A{}\npackage io.pck.b\ntrait B{}")
-		packageTraverser.traverse(ast)
+		traverser.traverse(ast)
 
 		val results = sb.mkString
 		assert(results.contains("io.pck.a\n") && results.contains("io.pck.b\n"))
 	}
 
+	it should "reads fully qualified name" in{
+		val sb = StringBuilder.newBuilder
+
+		object traverser extends Analyzer.Traverser{
+			override def traverse(tree: Analyzer.Tree) = tree match {
+				case Analyzer.ClassDef(mods, name, tparams, impl) =>
+					println(name)
+					super.traverseTrees(tparams)
+					super.traverse(impl)
+				case _ => super.traverse(tree)
+			}
+		}
+
+		val ast = Analyzer.parse("package io.pck.a{\ntrait A{}}\npackage io.pck.b\ntrait B{}")
+		traverser.traverse(ast)
+
+		val results = sb.mkString
+		//assert(results.contains("io.pck.a\n") && results.contains("io.pck.b\n"))
+	}
+
 	it should "reads ImportDef" in{
 		val sb = StringBuilder.newBuilder
 
-		object packageTraverser extends Analyzer.Traverser{
+		object traverser extends Analyzer.Traverser{
 			override def traverse(tree: Analyzer.Tree) = tree match {
 				case Analyzer.Import(expr, selectors) =>
 					sb.append(expr+"\n")
@@ -73,7 +93,7 @@ class CoreSpec extends FlatSpec{
 		}
 
 		val ast = Analyzer.parse("package io.pck.a\nimport io.pck.b.A\nimport io.pck.b._\nimport io.pck.{h => A}\ntrait A{}")
-		packageTraverser.traverse(ast)
+		traverser.traverse(ast)
 
 		val results = sb.mkString
 		assert(results == "io.pck.b\nio.pck.b\nio.pck\n")

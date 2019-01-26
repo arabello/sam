@@ -17,9 +17,4 @@ object Analyzer extends Global(new Settings, new StoreReporter) {
 	}
 
 	def parseCode(code: Code): Tree = parse(code.content)
-
-	def analyze(code: Code)(block: Tree => Unit): Unit = {
-
-		val ast = parseCode(code)
-	}
 }
