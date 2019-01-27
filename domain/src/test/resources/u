@@ -1,0 +1,8 @@
+package c.c.u
+
+import c.b.s._
+import c.a.r.R
+
+class U(id: Set[String]){
+    val n = 3
+}

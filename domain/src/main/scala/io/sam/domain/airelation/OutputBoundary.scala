@@ -1,5 +1,5 @@
 package io.sam.domain.airelation
 
 trait OutputBoundary {
-	def measure(): Unit
+	def deliver(outputData: OutputData): Unit
 }

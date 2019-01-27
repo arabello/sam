@@ -6,23 +6,22 @@ import io.sam.core._
 
 import scala.io.Source
 
-private class AIRelationInteractor extends OutputBoundary with InputBoundary with DataGateway with Observers[AIRelationInteractor] {
+private class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary{
 	private var inputData = InputData(Map[String, Set[File]]())
-	private var outputData = OutputData(Set[MeasuredModule]())
 	private var submittedModules = Set[Module]()
 
-	override def measure(): Unit = {
-		outputData = OutputData(Set[MeasuredModule]())
+	def measure(): Unit = {
+		var measuredModules = Set[MeasuredModule]()
 		val analizedModules = analize(submittedModules)
 
 		analizedModules foreach{ analizedModule =>
 			val A = analizedModule.abstractness
 			val I = analizedModule.instability(analizedModules.dropWhile(exclude => exclude == analizedModule))
 			val D = scala.math.abs(A + I - 1)
-			outputData.modules += MeasuredModule(analizedModule.code.id, A, I, D)
+			measuredModules += MeasuredModule(analizedModule.code.id, A, I, D)
 		}
 
-		notifyObservers()
+		out.deliver(OutputData(measuredModules))
 	}
 
 	override def submitModules(data: InputData): Unit = {

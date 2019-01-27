@@ -1,0 +1,4 @@
+package c.b.s
+
+abstract class S(id: String)
+

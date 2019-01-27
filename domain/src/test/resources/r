@@ -1,0 +1,4 @@
+package c.a.r
+
+case class R(val id: String)
+
