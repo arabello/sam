@@ -1,4 +1,6 @@
 package c.a.r
 
+import c.c.u.U
+
 case class R(val id: String)
 

@@ -1,5 +1,5 @@
 package io.sam.domain.airelation
 
 trait InputBoundary {
-	def submitModules(data: InputData): Unit
+	def measure(data: InputData): Unit
 }

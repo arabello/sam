@@ -1,7 +1,5 @@
 package c.c.t
 
-import c.a.{q => Q}
-
 case class T(val n: Int){
     val kkjkk = q
 }

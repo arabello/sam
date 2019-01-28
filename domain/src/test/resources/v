@@ -1,7 +1,5 @@
 package c.d.v
 
-import c.c.U
-
-class V(id: Set[String]) extends U{
+class V(id: Set[String]){
 
 }

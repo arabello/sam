@@ -1,16 +1,22 @@
 package io.sam.domain.airelation
 
-import java.io.File
-
 import io.sam.core._
 
 import scala.io.Source
 
 private class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary{
-	private var inputData = InputData(Map[String, Set[File]]())
-	private var submittedModules = Set[Module]()
 
-	def measure(): Unit = {
+	override def measure(data: InputData): Unit = {
+		var submittedModules = Set[Module]()
+
+		data.modules foreach{ case (name, files) =>
+			var sources = Set[Code]()
+			files foreach{ file =>
+				sources += SourceCode(file.getCanonicalPath, Source.fromFile(file))
+			}
+			submittedModules += Module(name, sources)
+		}
+
 		var measuredModules = Set[MeasuredModule]()
 		val analizedModules = analize(submittedModules)
 
@@ -24,17 +30,7 @@ private class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) ex
 		out.deliver(OutputData(measuredModules))
 	}
 
-	override def submitModules(data: InputData): Unit = {
-		data.modules foreach{ case (name, files) =>
-			var sources = Set[Code]()
-			files foreach{ file =>
-				sources += SourceCode(file.getCanonicalPath, Source.fromFile(file))
-			}
-			submittedModules += Module(name, sources)
-		}
-	}
-
-	private class AIRelationTraverser(module: Module) extends Analyzer.Traverser{
+	class AIRelationTraverser(module: Module) extends Analyzer.Traverser{
 		private var packages = Set[String]()
 		private var imports = Set[Analyzer.Import]()
 		private var numClasses = 0
@@ -69,8 +65,8 @@ private class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) ex
 		var result = Set[AnalizedModule]()
 
 		modules foreach{ module =>
-			val traverser = new AIRelationTraverser(module)
 			val ast = Analyzer.parseCode(module)
+			val traverser = new AIRelationTraverser(module)
 			traverser.traverse(ast)
 			result += traverser.analizedModule
 		}

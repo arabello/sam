@@ -26,8 +26,6 @@ class AIRelationTest extends FlatSpec{
 			"Cd" -> Set[File](new File(s"$resPath/v"))
 		))
 
-		interactor.submitModules(inputData)
-		interactor.measure()
-
+		interactor.measure(inputData)
 	}
 }
