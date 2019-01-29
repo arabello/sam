@@ -1,0 +1,3 @@
+package c.c.x
+
+case class X(val n: Int)

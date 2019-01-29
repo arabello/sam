@@ -45,8 +45,8 @@ private case class AnalizedModule(code: Module, packages: Set[String], imports: 
 			fanout += numDependencies(other)
 		}
 
-		fanout / (fanin + fanout) // instability formula
+		fanout.toFloat / (fanin + fanout) // instability formula
 	}
 
-	def abstractness: Float = numAbstractClasses / numClasses // abstractness formula
+	def abstractness: Float =  numAbstractClasses.toFloat / numClasses // abstractness formula
 }

@@ -2,6 +2,6 @@ package c.c.u
 
 import c.d.v.V
 
-class U(id: Set[String]) extends V{
+abstract class U(id: Set[String]) extends V{
     val n = 3
 }

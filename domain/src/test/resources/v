@@ -1,5 +1,5 @@
 package c.d.v
 
-class V(id: Set[String]){
+abstract class V(id: Set[String]){
 
 }

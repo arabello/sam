@@ -20,11 +20,12 @@ private class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) ex
 		var measuredModules = Set[MeasuredModule]()
 		val analizedModules = analize(submittedModules)
 
-		analizedModules foreach{ analizedModule =>
-			val A = analizedModule.abstractness
-			val I = analizedModule.instability(analizedModules.dropWhile(exclude => exclude == analizedModule))
+		analizedModules foreach{ current =>
+			val A = current.abstractness
+			val others = analizedModules.filter(m => m != current)
+			val I = current.instability(others)
 			val D = scala.math.abs(A + I - 1)
-			measuredModules += MeasuredModule(analizedModule.code.id, A, I, D)
+			measuredModules += MeasuredModule(current.code.id, A, I, D)
 		}
 
 		out.deliver(OutputData(measuredModules))
