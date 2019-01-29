@@ -1,0 +1,7 @@
+package c.c.u
+
+import c.d.v.V
+
+class U(id: Set[String]) extends V{
+    val n = 3
+}

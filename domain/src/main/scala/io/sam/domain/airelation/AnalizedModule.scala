@@ -16,16 +16,19 @@ private case class AnalizedModule(code: Module, packages: Set[String], imports: 
 		expr >> io.pck
 		selectors >> List(ImportSelector(TermName("h"), 68, TermName("A"), 73))
 	*/
+
 	private def numDependencies(on: AnalizedModule): Int = {
 		var nDeps = 0
 
-		imports foreach { thisImport => // check imports of the module
-			if (on.packages.contains(thisImport.expr.toString())){ // if an import name expr is contained in the packages of an other component the fanin must be incremented
-				nDeps += thisImport.selectors.size // increment the fanin with the num of the classes used by the module
-				// Check for WILDCARD, if WILDCARD is used is assumed that the module use all the classes contained by the specified package
-				thisImport.selectors foreach{ selector =>
-					if (selector.name == Analyzer.termNames.WILDCARD)
-						nDeps += on.numClasses
+		imports foreach{ imp =>
+
+			on.packages foreach{ pck =>
+				if (imp.expr.toString().contains(pck)){
+					nDeps += 1
+					imp.selectors foreach{ selector =>
+						if (selector.name == Analyzer.termNames.WILDCARD)
+							nDeps += on.numClasses - 1
+					}
 				}
 			}
 		}
@@ -38,8 +41,8 @@ private case class AnalizedModule(code: Module, packages: Set[String], imports: 
 		var fanout = 0
 
 		others foreach{ other =>
-			fanin += numDependencies(other)
-			fanout += other.numDependencies(this)
+			fanin += other.numDependencies(this)
+			fanout += numDependencies(other)
 		}
 
 		fanout / (fanin + fanout) // instability formula

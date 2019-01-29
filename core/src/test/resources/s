@@ -1,0 +1,6 @@
+package c.b.s
+
+import c.c.u.U
+
+abstract class S(id: String)
+

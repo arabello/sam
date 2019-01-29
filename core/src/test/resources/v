@@ -1,0 +1,5 @@
+package c.d.v
+
+class V(id: Set[String]){
+
+}

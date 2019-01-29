@@ -1,8 +1,6 @@
 package io.sam.core.test
 
 
-import java.io._
-
 import io.sam.core.Analyzer._
 import io.sam.core._
 import org.scalatest.FlatSpec
@@ -11,13 +9,13 @@ import scala.io.Source
 
 class CoreSpec extends FlatSpec{
 
-	val resPath = "core/out/test/resources"
+	val resPath = "core/src/test/resources"
 
 	/////////////////////
 	///// Traverser /////
 	/////////////////////
 
-	"Traverser" should "reads abstract classes" in{
+	"Analyzer" should "reads abstract classes" in{
 
 		val sc = SourceCode("~", Source.fromString("package io.core \n trait T{\ntrait T2{}} \n abstract class A{}\n object O{}"))
 
@@ -57,7 +55,7 @@ class CoreSpec extends FlatSpec{
 		traverser.traverse(ast)
 
 		val results = sb.mkString
-		assert(results.contains("io.pck.a\n") && results.contains("io.pck.b\n"))
+		assert(results == "io.pck.a\nio.pck.b\n")
 	}
 
 	it should "reads fully qualified name" in{
@@ -125,41 +123,29 @@ class CoreSpec extends FlatSpec{
 	///// Entities /////
 	////////////////////
 
-	"Entities" should "create SourceCode from file" in{
-		val expectedContent = "abstract class A{}"
-		val path = s"$resPath/A.scala"
-		new PrintWriter(path) { write(expectedContent); close() }
+	"Module" should "inserts newline between each given resources (avoiding package lost)" in {
+		val t = SourceCode("t", Source.fromFile(s"$resPath/t"))
+		val u = SourceCode("u", Source.fromFile(s"$resPath/u"))
+		val Cc = Module("Cc", Set(t, u))
 
-		SourceCode(path, Source.fromFile(path)) match {
-			case sc @ SourceCode (_, _) =>
-				assert(sc.content == expectedContent)
-			case _ => fail()
+		object packageTraverser extends Analyzer.Traverser{
+			var packages = Set[String]()
+
+			override def traverse(tree: Analyzer.Tree) = tree match {
+				case Analyzer.PackageDef(pid, stats) =>
+
+					packages += pid.toString()
+
+					super.traverseTrees(stats)
+					super.traverse(pid)
+				case _ => super.traverse(tree)
+			}
+
 		}
 
-		Helper.mkSourceCodeFromFile("invalid path") match {
-			case isc @ InvalidSourceCode (_) =>
-				assert(isc.content.isEmpty)
-			case _ => fail()
-		}
-	}
-
-	it should "create Module from multiple files" in{
-
-		var files = Map[String, String]()
-		files += ("A" -> "abstract class A{}")
-		files += ("T" -> "trait T{}")
-		files += ("C" -> "case class C{}")
-
-		files.foreach{ case (name, content) =>
-			val pathA = s"$resPath/$name.scala"
-			new PrintWriter(pathA) { write(content); close() }
-		}
-
-		Helper.mkModuleFromFolder(resPath) match {
-			case cc @ Module(_, _) =>
-				assert(cc.content.contains(files("A")))
-				assert(cc.content.contains(files("C")))
-				assert(cc.content.contains(files("T")))
-		}
+		val ast = Analyzer.parseCode(Cc)
+		packageTraverser.traverse(ast)
+		assert(packageTraverser.packages.contains("c.c.t") &&
+		packageTraverser.packages.contains("c.c.u"))
 	}
 }

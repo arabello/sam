@@ -1,0 +1,5 @@
+package c.c.t
+
+case class T(val n: Int){
+    val kkjkk = q
+}
