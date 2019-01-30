@@ -1,5 +1,5 @@
 package io.sam.domain.airelation
 
-import java.io.File
+import scala.io.Source
 
-case class InputData(modules: Map[String, Set[File]])
+case class InputData(components: Map[String, Set[(String, Source)]])

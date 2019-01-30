@@ -2,17 +2,15 @@ package io.sam.domain.airelation
 
 import io.sam.core._
 
-import scala.io.Source
-
-private class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary{
+class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary{
 
 	override def measure(data: InputData): Unit = {
 		var submittedModules = Set[Module]()
 
-		data.modules foreach{ case (name, files) =>
+		data.components foreach { case (name, resources) =>
 			var sources = Set[Code]()
-			files foreach{ file =>
-				sources += SourceCode(file.getCanonicalPath, Source.fromFile(file))
+			resources foreach { case (id, src) =>
+				sources += SourceCode(id, src)
 			}
 			submittedModules += Module(name, sources)
 		}
@@ -31,7 +29,7 @@ private class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) ex
 		out.deliver(OutputData(measuredModules))
 	}
 
-	class AIRelationTraverser(module: Module) extends Analyzer.Traverser{
+	private class AIRelationTraverser(module: Module) extends Analyzer.Traverser{
 		private var packages = Set[String]()
 		private var imports = Set[Analyzer.Import]()
 		private var numClasses = 0

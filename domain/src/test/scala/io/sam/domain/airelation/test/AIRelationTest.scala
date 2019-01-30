@@ -5,14 +5,16 @@ import java.io.File
 import io.sam.domain.airelation._
 import org.scalatest.FlatSpec
 
+import scala.io.Source
+
 class AIRelationTest extends FlatSpec{
 	val resPath = "domain/src/test/resources"
 	object gateway extends DataGateway{}
 	val inputData = InputData(Map(
-		"Ca" -> Set[File](new File(s"$resPath/q"), new File(s"$resPath/r")),
-		"Cb" -> Set[File](new File(s"$resPath/s")),
-		"Cc" -> Set[File](new File(s"$resPath/t"), new File(s"$resPath/u")),
-		"Cd" -> Set[File](new File(s"$resPath/v"))
+		"Ca" -> Set(("q", Source.fromFile(new File(s"$resPath/q"))), ("r", Source.fromFile(new File(s"$resPath/r")))),
+		"Cb" -> Set(("s", Source.fromFile(new File(s"$resPath/s")))),
+		"Cc" -> Set(("t", Source.fromFile(new File(s"$resPath/t"))), ("s", Source.fromFile(new File(s"$resPath/u")))),
+		"Cd" -> Set(("v", Source.fromFile(new File(s"$resPath/v"))))
 	))
 
 	val abstractness = Map(

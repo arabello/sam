@@ -2,19 +2,20 @@ package io.sam.controllers
 
 import java.io.File
 
-import io.sam.domain.airelation.InputData
-import io.sam.domain.airelation.InputBoundary
+import io.sam.domain.airelation.{InputBoundary, InputData}
 
 class AIRelationController(inputBoundary: InputBoundary) {
-	private var modules = Map[String, Set[File]]()
+	private val data = scala.collection.mutable.Map[String, Set[File]]()
 
-	def snapshot: AnyRef = modules.clone()
+	def clear(): Unit = {data.keys foreach( key => data.remove(key))}
+
+	def snapshot: Map[String, Set[File]] = data.toMap
 
 	def addFiles(moduleName: String, resources: Set[File]): Result = {
 		resources.foreach(f =>
 			addFile(moduleName, f) match {
 				case Success() =>
-				case _ => return _
+				case error: Error => return error
 			}
 		)
 		Success()
@@ -27,11 +28,12 @@ class AIRelationController(inputBoundary: InputBoundary) {
 		if (!file.isFile)
 			return NotAFile(file)
 
-		if (!modules.contains(moduleName))
-			modules += (moduleName -> Set())
+		if (!data.contains(moduleName))
+			data += (moduleName -> Set())
 
-		modules(moduleName) += file
+		data(moduleName) += file
+		Success()
 	}
 
-	def submit(): Unit = inputBoundary.measure(InputData(modules))
+	def submit(): Unit = inputBoundary.measure(InputData(data.toMap))
 }
