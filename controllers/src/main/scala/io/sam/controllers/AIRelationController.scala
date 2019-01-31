@@ -4,12 +4,14 @@ import java.io.File
 
 import io.sam.domain.airelation.{InputBoundary, InputData}
 
+import scala.io.Source
+
 class AIRelationController(inputBoundary: InputBoundary) {
-	private val data = scala.collection.mutable.Map[String, Set[File]]()
+	private val data = scala.collection.mutable.Map[String, Set[(String, File)]]()
 
 	def clear(): Unit = {data.keys foreach( key => data.remove(key))}
 
-	def snapshot: Map[String, Set[File]] = data.toMap
+	def snapshot: Map[String, Set[(String, File)]] = data.toMap
 
 	def addFiles(moduleName: String, resources: Set[File]): Result = {
 		resources.foreach(f =>
@@ -31,9 +33,22 @@ class AIRelationController(inputBoundary: InputBoundary) {
 		if (!data.contains(moduleName))
 			data += (moduleName -> Set())
 
-		data(moduleName) += file
+		data(moduleName) += (file.getCanonicalPath -> file)
 		Success()
 	}
 
-	def submit(): Unit = inputBoundary.measure(InputData(data.toMap))
+	def submit(): Unit = {
+		var components = Map[String, Set[(String, Source)]]()
+
+		data foreach { case (compName, srcs) =>
+			var res = Set[(String, Source)]()
+			srcs foreach{ case (srcName, src) =>
+				res += (srcName -> Source.fromFile(src))
+			}
+			components += (compName -> res)
+		}
+
+		val inputData = InputData(components)
+		inputBoundary.measure(inputData)
+	}
 }

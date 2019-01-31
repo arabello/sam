@@ -21,6 +21,6 @@ class AIRelationControllerTest extends FlatSpec{
 
 		assert(ctrl.addFile("newModule", file).isSuccessfully)
 		assert(ctrl.snapshot.contains("newModule"))
-		assert(ctrl.snapshot("newModule").contains(new File(s"$resPath/single")))
+		assert(ctrl.snapshot("newModule").contains(file.getCanonicalPath -> file))
 	}
 }
