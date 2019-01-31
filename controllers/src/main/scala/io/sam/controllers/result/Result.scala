@@ -1,4 +1,4 @@
-package io.sam.controllers
+package io.sam.controllers.result
 
 trait Result{
 	val isSuccessfully: Boolean
