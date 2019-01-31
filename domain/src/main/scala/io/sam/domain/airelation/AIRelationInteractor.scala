@@ -1,8 +1,8 @@
 package io.sam.domain.airelation
 
-import io.sam.core._
+import io.sam.core.{Code, CodeFactory, Component, Analyzer}
 
-class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary{
+class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary with CodeFactory {
 
 	override def measure(data: InputData): Unit = {
 		var submittedModules = Set[Component]()
@@ -10,7 +10,7 @@ class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends In
 		data.components foreach { case (name, resources) =>
 			var sources = Set[Code]()
 			resources foreach { case (id, src) =>
-				sources += SourceCode(id, src)
+				sources += mkCodeFromSource(id, src)
 			}
 			submittedModules += Component(name, sources)
 		}

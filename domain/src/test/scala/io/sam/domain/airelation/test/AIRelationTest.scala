@@ -10,12 +10,6 @@ import scala.io.Source
 class AIRelationTest extends FlatSpec{
 	val resPath = "domain/src/test/resources"
 	object gateway extends DataGateway{}
-	val inputData = InputData(Map(
-		"Ca" -> Set(("q", Source.fromFile(new File(s"$resPath/q"))), ("r", Source.fromFile(new File(s"$resPath/r")))),
-		"Cb" -> Set(("s", Source.fromFile(new File(s"$resPath/s")))),
-		"Cc" -> Set(("t", Source.fromFile(new File(s"$resPath/t"))), ("s", Source.fromFile(new File(s"$resPath/u")))),
-		"Cd" -> Set(("v", Source.fromFile(new File(s"$resPath/v"))))
-	))
 
 	val abstractness = Map(
 		"Ca" -> 0.0,
@@ -39,6 +33,13 @@ class AIRelationTest extends FlatSpec{
 	)
 
 	"AIRelationInteractor" should "submit modules and deliver response" in{
+		val inputData = InputData(Map(
+			"Ca" -> Set(("q", Source.fromFile(new File(s"$resPath/q"))), ("r", Source.fromFile(new File(s"$resPath/r")))),
+			"Cb" -> Set(("s", Source.fromFile(new File(s"$resPath/s")))),
+			"Cc" -> Set(("t", Source.fromFile(new File(s"$resPath/t"))), ("s", Source.fromFile(new File(s"$resPath/u")))),
+			"Cd" -> Set(("v", Source.fromFile(new File(s"$resPath/v"))))
+		))
+
 		object presenter extends OutputBoundary{
 			override def deliver(outputData: OutputData): Unit = {
 				assert(true)
@@ -48,6 +49,13 @@ class AIRelationTest extends FlatSpec{
 	}
 
 	it should "calculate abstractness, instability and distance" in{
+		val inputData = InputData(Map(
+			"Ca" -> Set(("q", Source.fromFile(new File(s"$resPath/q"))), ("r", Source.fromFile(new File(s"$resPath/r")))),
+			"Cb" -> Set(("s", Source.fromFile(new File(s"$resPath/s")))),
+			"Cc" -> Set(("t", Source.fromFile(new File(s"$resPath/t"))), ("s", Source.fromFile(new File(s"$resPath/u")))),
+			"Cd" -> Set(("v", Source.fromFile(new File(s"$resPath/v"))))
+		))
+
 		object presenter extends OutputBoundary{
 			override def deliver(outputData: OutputData): Unit = {
 				outputData.modules foreach { mod =>
@@ -57,6 +65,7 @@ class AIRelationTest extends FlatSpec{
 				}
 			}
 		}
+
 		new AIRelationInteractor(presenter, gateway).measure(inputData)
 	}
 
