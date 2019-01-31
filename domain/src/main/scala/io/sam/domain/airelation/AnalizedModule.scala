@@ -1,8 +1,8 @@
 package io.sam.domain.airelation
 
-import io.sam.core.{Analyzer, Module}
+import io.sam.core.{Analyzer, Component}
 
-private case class AnalizedModule(code: Module, packages: Set[String], imports: Set[Analyzer.Import], numClasses: Int, numAbstractClasses: Int){
+private case class AnalizedModule(code: Component, packages: Set[String], imports: Set[Analyzer.Import], numClasses: Int, numAbstractClasses: Int){
 	/*
 		For "import io.pck.b.A\n":
 		expr >> io.pck.b

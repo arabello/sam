@@ -1,6 +1,8 @@
 package io.sam.core.test
 
 
+import java.io.File
+
 import io.sam.core.Analyzer._
 import io.sam.core._
 import org.scalatest.FlatSpec
@@ -17,7 +19,7 @@ class CoreSpec extends FlatSpec{
 
 	"Analyzer" should "reads abstract classes" in{
 
-		val sc = SourceCode("~", Source.fromString("package io.core \n trait T{\ntrait T2{}} \n abstract class A{}\n object O{}"))
+		val sc = SourceCode("~", "package io.core \n trait T{\ntrait T2{}} \n abstract class A{}\n object O{}")
 
 		var n_abstracts = 0
 		object traverser extends Analyzer.Traverser {
@@ -58,26 +60,6 @@ class CoreSpec extends FlatSpec{
 		assert(results == "io.pck.a\nio.pck.b\n")
 	}
 
-	it should "reads fully qualified name" in{
-		val sb = StringBuilder.newBuilder
-
-		object traverser extends Analyzer.Traverser{
-			override def traverse(tree: Analyzer.Tree) = tree match {
-				case Analyzer.ClassDef(mods, name, tparams, impl) =>
-					println(name)
-					super.traverseTrees(tparams)
-					super.traverse(impl)
-				case _ => super.traverse(tree)
-			}
-		}
-
-		val ast = Analyzer.parse("package io.pck.a{\ntrait A{}}\npackage io.pck.b\ntrait B{}")
-		traverser.traverse(ast)
-
-		val results = sb.mkString
-		//assert(results.contains("io.pck.a\n") && results.contains("io.pck.b\n"))
-	}
-
 	it should "reads ImportDef" in{
 		val sb = StringBuilder.newBuilder
 
@@ -99,7 +81,7 @@ class CoreSpec extends FlatSpec{
 
 	it should "reads module def (object)" in{
 
-		val sc = SourceCode("~", Source.fromString("package io.core \n object O{\nobject O2{}} \n abstract class A{}"))
+		val sc = SourceCode("~", "package io.core \n object O{\nobject O2{}} \n abstract class A{}")
 
 		var n_object = 0
 		object traverser extends Analyzer.Traverser {
@@ -123,10 +105,60 @@ class CoreSpec extends FlatSpec{
 	///// Entities /////
 	////////////////////
 
-	"Module" should "inserts newline between each given resources (avoiding package lost)" in {
-		val t = SourceCode("t", Source.fromFile(s"$resPath/t"))
-		val u = SourceCode("u", Source.fromFile(s"$resPath/u"))
-		val Cc = Module("Cc", Set(t, u))
+	"CodeFactory" should "make SourceCode from file" in{
+		object factory extends CodeFactory{}
+
+		val f = new File(s"$resPath/t")
+		val sc = factory.mkCodeFromFile(f)
+
+		sc match{
+			case SourceCode(id, content) =>
+				assert(id == f.getCanonicalPath)
+				assert(content == "package c.c.t\n\ncase class T(val n: Int){\n    val kkjkk = q\n}")
+		}
+	}
+
+	it should "make SourceCode from source" in{
+		object factory extends CodeFactory{}
+
+		val f = Source.fromFile(s"$resPath/t")
+		val sc = factory.mkCodeFromSource(s"$resPath/t", f)
+
+		sc match{
+			case SourceCode(id, content) =>
+				assert(id == s"$resPath/t")
+				assert(content == "package c.c.t\n\ncase class T(val n: Int){\n    val kkjkk = q\n}")
+		}
+	}
+
+	it should "make Component from files" in{
+		object factory extends CodeFactory{}
+		val m = Map(
+			"t" -> new File(s"$resPath/t"),
+			"u" -> new File(s"$resPath/u")
+		)
+		val c = factory.mkCodeFromFiles("test", Set(m("t"), m("u")))
+
+		c match{
+			case com @ Component(id, sources) =>
+				assert(id == "test")
+				val str = StringBuilder.newBuilder
+				sources foreach{ src =>
+					val s = Source.fromFile(new File(src.id)).mkString
+					assert(src.content == s)
+					str.append(s+ "\n")
+				}
+
+				assert(com.content == str.mkString)
+		}
+	}
+
+	"Component" should "inserts newline between each given resources (avoiding package lost)" in {
+		object factory extends CodeFactory{}
+
+		val t = factory.mkCodeFromFile(new File(s"$resPath/t"))
+		val u = factory.mkCodeFromFile(new File(s"$resPath/u"))
+		val Cc = Component("Cc", Set(t, u))
 
 		object packageTraverser extends Analyzer.Traverser{
 			var packages = Set[String]()

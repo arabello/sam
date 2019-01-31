@@ -5,14 +5,14 @@ import io.sam.core._
 class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary{
 
 	override def measure(data: InputData): Unit = {
-		var submittedModules = Set[Module]()
+		var submittedModules = Set[Component]()
 
 		data.components foreach { case (name, resources) =>
 			var sources = Set[Code]()
 			resources foreach { case (id, src) =>
 				sources += SourceCode(id, src)
 			}
-			submittedModules += Module(name, sources)
+			submittedModules += Component(name, sources)
 		}
 
 		var measuredModules = Set[MeasuredModule]()
@@ -29,7 +29,7 @@ class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends In
 		out.deliver(OutputData(measuredModules))
 	}
 
-	private class AIRelationTraverser(module: Module) extends Analyzer.Traverser{
+	private class AIRelationTraverser(module: Component) extends Analyzer.Traverser{
 		private var packages = Set[String]()
 		private var imports = Set[Analyzer.Import]()
 		private var numClasses = 0
@@ -60,7 +60,7 @@ class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends In
 		def analizedModule: AnalizedModule = AnalizedModule(module, packages, imports, numClasses, numAbstractClasses)
 	}
 
-	private def analize(modules: Set[Module]): Set[AnalizedModule] = {
+	private def analize(modules: Set[Component]): Set[AnalizedModule] = {
 		var result = Set[AnalizedModule]()
 
 		modules foreach{ module =>
