@@ -30,4 +30,14 @@ class AIRelationPresenterTest extends FlatSpec{
 		val presenter = new AIRelationScreenPresenter(view)
 		presenter.deliver(outputData)
 	}
+
+	"AIRelationViewModel" should "describe the AI relation graph" in {
+		val ai = AIRelationViewModel("", "", "", Set())
+		for (p <- ai.zoneOfPainLine(0.01f); u <- ai.zoneOfUselessnessLine(0.01f)){
+			assert(p.y < u.y)
+			assert(p.x < u.x)
+		}
+
+		ai.mainSequenceLine(0.1f).foreach{ p => assert(1 - p.x == p.y)}
+	}
 }
