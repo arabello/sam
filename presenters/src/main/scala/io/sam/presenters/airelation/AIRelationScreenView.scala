@@ -1,5 +1,5 @@
 package io.sam.presenters.airelation
 
 trait AIRelationScreenView {
-	val viewModel: AIRelationScreenViewModel
+	def receiveUpdate(viewModel: AIRelationViewModel)
 }

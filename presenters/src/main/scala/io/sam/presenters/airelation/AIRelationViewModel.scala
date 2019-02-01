@@ -1,9 +1,11 @@
-package io.sam.presenters.airelation.graph
+package io.sam.presenters.airelation
 
-case class AIRelationGraph(
-	                          title: Label,
-	                          xAxis: Label,
-	                          yAxis: Label,
+import io.sam.presenters.airelation.graph.Subject
+
+case class AIRelationViewModel(
+	                          title: String,
+	                          xAxis: String,
+	                          yAxis: String,
 	                          points: Set[Subject]){
 
 	// TODO Add main sequence math func in a functional way
