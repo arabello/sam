@@ -1,68 +1,40 @@
 package io.sam.view.airelation
 
-import java.io.{File, PrintWriter}
+import java.io.{File, FileReader, PrintWriter}
 
 import io.sam.presenters.airelation.{AIRelationScreenView, AIRelationViewModel}
 
-class AIRelationWebView extends AIRelationScreenView{
-	var outputFile: String = "view/src/test/resources/report.html"
+import scala.io.Source
 
-	private class WebReporter(model: AIRelationViewModel){
-		def createReport: String =
-			"""
-			  |<html>
-			  | <head>
-			  |     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.bundle.min.js"></script>
-			  | </head>
-			  | <body>
-			  |     <canvas id="myChart" width="400" height="400"></canvas>
-			  | </body>
-			  | <script>
-			  |var ctx = document.getElementById("myChart").getContext('2d');
-			  |var myChart = new Chart(ctx, {
-			  |    type: 'bar',
-			  |    data: {
-			  |        labels: ["Red", "Blue", "Yellow", "Green", "Purple", "Orange"],
-			  |        datasets: [{
-			  |            label: '# of Votes',
-			  |            data: [12, 19, 3, 5, 2, 3],
-			  |            backgroundColor: [
-			  |                'rgba(255, 99, 132, 0.2)',
-			  |                'rgba(54, 162, 235, 0.2)',
-			  |                'rgba(255, 206, 86, 0.2)',
-			  |                'rgba(75, 192, 192, 0.2)',
-			  |                'rgba(153, 102, 255, 0.2)',
-			  |                'rgba(255, 159, 64, 0.2)'
-			  |            ],
-			  |            borderColor: [
-			  |                'rgba(255,99,132,1)',
-			  |                'rgba(54, 162, 235, 1)',
-			  |                'rgba(255, 206, 86, 1)',
-			  |                'rgba(75, 192, 192, 1)',
-			  |                'rgba(153, 102, 255, 1)',
-			  |                'rgba(255, 159, 64, 1)'
-			  |            ],
-			  |            borderWidth: 1
-			  |        }]
-			  |    },
-			  |    options: {
-			  |        scales: {
-			  |            yAxes: [{
-			  |                ticks: {
-			  |                    beginAtZero:true
-			  |                }
-			  |            }]
-			  |        }
-			  |    }
-			  |});
-			  |</script>
-			  |</html>
-			""".stripMargin
+class AIRelationWebView(outputFile: File) extends AIRelationScreenView{
+	val pageChartTemp = new File("view/src/main/resources/page-chart-temp.html")
+	val chartTemp = new File("view/src/main/resources/chart-temp.js")
 
+	private def viewModelToJSArray(viewModel: AIRelationViewModel): String = {
+		val strBuild = StringBuilder.newBuilder
+		strBuild.append("[")
+		viewModel.points foreach{ point =>
+			strBuild.append(s"{label: '${point.label}', data: [{x:${point.x}, y: ${point.y}}]}")
+			if (point != viewModel.points.last)
+				strBuild.append(",")
+
+		}
+		strBuild.append("]")
+		strBuild.mkString
 	}
 
 	override def receiveUpdate(viewModel: AIRelationViewModel): Unit = {
-		val reporter = new WebReporter(viewModel)
+		outputFile.getParentFile.mkdirs()
+		val html = Source.fromFile(pageChartTemp)
+		val js = Source.fromFile(chartTemp)
+		val printer = new PrintWriter(outputFile)
 
+		val datasetsJs = viewModelToJSArray(viewModel)
+		val outJs = js.mkString.replace("{{datasets}}", datasetsJs)
+    		.replace("{{chartTitle}}", viewModel.title)
+		val out = html.mkString.replace("{{chartTempJs}}", outJs)
+
+		printer.println(out)
+		printer.close()
 	}
 }
