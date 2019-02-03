@@ -1,12 +1,10 @@
 package io.sam.view.airelation
 
-import java.io.{OutputStream, PrintWriter}
-
 import io.sam.presenters.airelation.{AIRelationScreenView, AIRelationViewModel}
-import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.json._
 
-class AIRelationJSONView(outputStream: OutputStream) extends AIRelationScreenView{
+class AIRelationJSONView(callback: String => Unit) extends AIRelationScreenView{
 	implicit val pointWrites: Writes[Point] = (
 		(JsPath \ "x").write[Float] and
 		(JsPath \ "y").write[Float] and
@@ -36,8 +34,6 @@ class AIRelationJSONView(outputStream: OutputStream) extends AIRelationScreenVie
 		val chart = Chart(viewModel.title, viewModel.xAxis, viewModel.yAxis, datasets.toSeq)
 		val json = Json.toJson(chart)
 
-		val pwriter = new PrintWriter(outputStream)
-		pwriter.write(json.toString())
-		pwriter.close()
+		callback(json.toString())
 	}
 }

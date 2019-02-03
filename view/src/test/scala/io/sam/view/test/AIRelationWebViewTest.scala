@@ -1,6 +1,6 @@
 package io.sam.view.test
 
-import java.io.{File, FileOutputStream}
+import java.io.{File, FileOutputStream, PrintWriter}
 
 import io.sam.domain.airelation.MeasuredModule
 import io.sam.presenters.airelation.AIRelationViewModel
@@ -16,7 +16,12 @@ class AIRelationWebViewTest extends FlatSpec{
 
 	"JSONView" should "create json file" in{
 		jsonFile.delete()
-		val view = new AIRelationJSONView(new FileOutputStream(jsonFile))
+		val callbackView: String => Unit  = { json =>
+			val pw = new PrintWriter(jsonFile)
+			pw.write(json)
+			pw.close()
+		}
+		val view = new AIRelationJSONView(callbackView)
 		var points = Set[Subject]()
 		(1 to 5).foreach{ i =>
 			points += Subject(MeasuredModule(s"m$i", math.random().toFloat, math.random().toFloat, math.random().toFloat))
