@@ -36,6 +36,10 @@ class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends In
 		private var numAbstractClasses = 0
 
 		override def traverse(tree: Analyzer.Tree) = tree match {
+			case Analyzer.ModuleDef(mods, name, impl) =>
+				numClasses += 1
+
+				super.traverse(impl)
 			case Analyzer.ClassDef(mods, name, tparams, impl) =>
 				if (mods.hasFlag(Analyzer.Flag.ABSTRACT))
 					numAbstractClasses += 1
