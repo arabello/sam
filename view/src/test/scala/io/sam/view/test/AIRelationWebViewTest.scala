@@ -1,24 +1,31 @@
 package io.sam.view.test
 
-import java.io.File
+import java.io.{File, FileOutputStream}
 
 import io.sam.domain.airelation.MeasuredModule
 import io.sam.presenters.airelation.AIRelationViewModel
-import io.sam.presenters.airelation.graph.{Point2D, Subject}
-import io.sam.view.airelation.AIRelationWebView
+import io.sam.presenters.airelation.graph.Subject
+import io.sam.view.airelation.AIRelationJSONView
 import org.scalatest.FlatSpec
+
+import scala.io.Source
 
 class AIRelationWebViewTest extends FlatSpec{
 
-	val outFile = new File("view/src/test/resources/airelation.html")
+	val jsonFile = new File("view/src/test/resources/airelation.json")
 
-	"View" should "create the report as file" in{
-		val view = new AIRelationWebView(outFile)
+	"JSONView" should "create json file" in{
+		jsonFile.delete()
+		val view = new AIRelationJSONView(new FileOutputStream(jsonFile))
 		var points = Set[Subject]()
-		(1 to 10).foreach{ i =>
+		(1 to 5).foreach{ i =>
 			points += Subject(MeasuredModule(s"m$i", math.random().toFloat, math.random().toFloat, math.random().toFloat))
 		}
-		val viewModel = AIRelationViewModel("AI Relation Plot", "Abstractness", "Instability", points)
+		val id = math.ceil(math.random() * 100)
+		val viewModel = AIRelationViewModel(s"AI Relation Plot {$id}", "Abstractness", "Instability", points)
 		view.receiveUpdate(viewModel)
+
+		assert(jsonFile.exists())
+		assert(Source.fromFile(jsonFile).mkString.contains(s"{$id}"))
 	}
 }
