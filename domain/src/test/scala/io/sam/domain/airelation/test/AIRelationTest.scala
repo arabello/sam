@@ -11,21 +11,21 @@ class AIRelationTest extends FlatSpec{
 	val resPath = "domain/src/test/resources"
 	object gateway extends DataGateway{}
 
-	val abstractness = Map(
+	val abstractness: Map[String, Double] = Map(
 		"Ca" -> 0.0,
 		"Cb" -> 0.0,
 		"Cc" -> 0.5,
 		"Cd" -> 1.0
 	)
 
-	val instability = Map(
+	val instability: Map[String, Double] = Map(
 		"Ca" -> 1.0,
 		"Cb" -> 1.0,
 		"Cc" -> 0.25,
 		"Cd" -> 0.0
 	)
 
-	val distance = Map(
+	val distance: Map[String, Double] = Map(
 		"Ca" -> 0.0,
 		"Cb" -> 0.0,
 		"Cc" -> 0.25,
@@ -42,7 +42,7 @@ class AIRelationTest extends FlatSpec{
 
 		object presenter extends OutputBoundary{
 			override def deliver(outputData: OutputData): Unit = {
-				assert(true)
+				assert(condition = true)
 			}
 		}
 		new AIRelationInteractor(presenter, gateway).measure(inputData)

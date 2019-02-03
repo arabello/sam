@@ -1,6 +1,6 @@
 package io.sam.domain.airelation
 
-import io.sam.core.{Code, CodeFactory, Component, Analyzer}
+import io.sam.core.{Analyzer, Code, CodeFactory, Component}
 
 class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary with CodeFactory {
 
@@ -35,7 +35,7 @@ class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends In
 		private var numClasses = 0
 		private var numAbstractClasses = 0
 
-		override def traverse(tree: Analyzer.Tree) = tree match {
+		override def traverse(tree: Analyzer.Tree): Unit = tree match {
 			case Analyzer.ModuleDef(mods, name, impl) =>
 				numClasses += 1
 

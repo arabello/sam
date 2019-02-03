@@ -44,7 +44,7 @@ class CoreSpec extends FlatSpec{
 		val sb = StringBuilder.newBuilder
 
 		object traverser extends Analyzer.Traverser{
-			override def traverse(tree: Analyzer.Tree) = tree match {
+			override def traverse(tree: Analyzer.Tree): Unit = tree match {
 				case Analyzer.PackageDef(pid, stats) =>
 					sb.append(pid.toString()+"\n")
 					super.traverseTrees(stats)
@@ -64,7 +64,7 @@ class CoreSpec extends FlatSpec{
 		val sb = StringBuilder.newBuilder
 
 		object traverser extends Analyzer.Traverser{
-			override def traverse(tree: Analyzer.Tree) = tree match {
+			override def traverse(tree: Analyzer.Tree): Unit = tree match {
 				case Analyzer.Import(expr, selectors) =>
 					sb.append(expr+"\n")
 					super.traverse(expr)
@@ -161,9 +161,9 @@ class CoreSpec extends FlatSpec{
 		val Cc = Component("Cc", Set(t, u))
 
 		object packageTraverser extends Analyzer.Traverser{
-			var packages = Set[String]()
+			var packages: Set[String] = Set[String]()
 
-			override def traverse(tree: Analyzer.Tree) = tree match {
+			override def traverse(tree: Analyzer.Tree): Unit = tree match {
 				case Analyzer.PackageDef(pid, stats) =>
 
 					packages += pid.toString()

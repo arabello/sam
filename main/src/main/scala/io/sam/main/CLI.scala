@@ -15,6 +15,7 @@ object CLI extends App {
 		val out = new File("/Users/MatteoPellegrino/Desktop/airelation.json")
 
 		val callbackView: String => Unit  = { json =>
+			out.delete()
 			val pw = new PrintWriter(out)
 			pw.write(json)
 			pw.close()
@@ -25,8 +26,8 @@ object CLI extends App {
 		val interactor = new AIRelationInteractor(presenter, ignored)
 		val controller = new AIRelationController(interactor)
 
-		controller.addFile("main", new File("/Users/MatteoPellegrino/Documents/Dev/Project/sam/main/src/main/scala/io/sam/main/CLI.scala"))
-		controller.addFile("view", new File("/Users/MatteoPellegrino/Documents/Dev/Project/sam/view/src/main/scala/io/sam/view/airelation/Chart.scala"))
+		controller.addFilesRecursively("domain", "/Users/MatteoPellegrino/Documents/Dev/Project/sam/domain")
+		controller.addFilesRecursively("core", "/Users/MatteoPellegrino/Documents/Dev/Project/sam/core")
 
 		controller.submit()
 	}

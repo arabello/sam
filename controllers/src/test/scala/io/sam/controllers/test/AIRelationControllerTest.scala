@@ -4,8 +4,8 @@ import java.io.File
 
 import io.sam.controllers.AIRelationController
 import io.sam.controllers.result.{FileNotExists, NotAFile, NotScalaFile}
-import org.scalatest.FlatSpec
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway, OutputBoundary, OutputData}
+import org.scalatest.FlatSpec
 
 class AIRelationControllerTest extends FlatSpec{
 	object gateway extends DataGateway{}

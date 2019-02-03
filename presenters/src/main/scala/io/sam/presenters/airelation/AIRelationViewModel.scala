@@ -8,7 +8,7 @@ case class AIRelationViewModel(
 	                          yAxis: String,
 	                          points: Set[Subject]){
 
-	private def walkDomain(granularity: Float)(block: BigDecimal => Unit) = (BigDecimal(0f) to BigDecimal(1f) by BigDecimal(granularity)).foreach(block)
+	private def walkDomain(granularity: Float)(block: BigDecimal => Unit): Unit = (BigDecimal(0f) to BigDecimal(1f) by BigDecimal(granularity)).foreach(block)
 
 	private def reverseLine(x: Float, q: Float) = q - x
 

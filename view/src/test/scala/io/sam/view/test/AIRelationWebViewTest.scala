@@ -1,6 +1,6 @@
 package io.sam.view.test
 
-import java.io.{File, FileOutputStream, PrintWriter}
+import java.io.{File, PrintWriter}
 
 import io.sam.domain.airelation.MeasuredModule
 import io.sam.presenters.airelation.AIRelationViewModel
