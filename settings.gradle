@@ -1,8 +1,8 @@
 rootProject.name = 'sam'
 include 'core'
-include 'main'
 include 'domain'
 include 'controllers'
 include 'presenters'
 include 'view'
+include 'main'
 
