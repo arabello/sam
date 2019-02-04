@@ -16,4 +16,9 @@ object ProjectConfig {
 		override val excludeClause: File => Boolean = file => file.isHidden
 		override val acceptExtension: Set[String] = Set(SCALA_EXT)
 	}
+
+	case class None() extends Config {
+		override val excludeClause: File => Boolean = _ => false // include all, exclude nothing
+		override val acceptExtension: Set[String] = Set()
+	}
 }

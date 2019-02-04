@@ -2,7 +2,7 @@ package io.sam.controllers.test
 
 import java.io.File
 
-import io.sam.controllers.result.{ExtensionExcluded, FileNotExists, NotAFile}
+import io.sam.controllers.result._
 import io.sam.controllers.{AIRelationController, ProjectConfig}
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway, OutputBoundary, OutputData}
 import org.scalatest.FlatSpec
@@ -17,68 +17,63 @@ class AIRelationControllerTest extends FlatSpec{
 
 	"AIRElationController" should "add a file to a new module" in {
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
+		val ctrl = new AIRelationController(interactor, ProjectConfig.None())
 		val file = new File(s"$resPath/1.scala")
 
-		assert(ctrl.addFile("newModule", file).isSuccessfully)
+		ctrl.addFile("newModule", file) match {
+			case Success(f) => assert(file == f)
+			case _ => fail()
+		}
 		assert(ctrl.snapshot.contains("newModule"))
 		assert(ctrl.snapshot("newModule").contains(file.getCanonicalPath -> file))
 	}
 
 	it should "add a file to an existing module" in {
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
+		val ctrl = new AIRelationController(interactor, ProjectConfig.None())
 		val file = new File(s"$resPath/1.scala")
 
 		ctrl.addFile("existingModule", new File(s"$resPath/2.scala"))
 
-		assert(ctrl.addFile("existingModule", file).isSuccessfully)
+		ctrl.addFile("existingModule", file) match {
+			case Success(f) => assert(file == f)
+			case _ => fail()
+		}
 		assert(ctrl.snapshot.contains("existingModule"))
 		assert(ctrl.snapshot("existingModule").size == 2)
 	}
 
 	it should "report errors" in {
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
+		val ctrl = new AIRelationController(interactor, ProjectConfig.None())
 		val file = new File(s"$resPath/notExists")
 
 		val result = ctrl.addFile(file.getCanonicalPath, file)
-		assert(!result.isSuccessfully)
+
 
 		result match {
-			case err @ FileNotExists(errFile) =>
-				assert(err.mkHuman.contains("not exist"))
+			case err @ Failure(errFile, why) =>
+				assert(why.contains("not exist"))
 				assert(errFile == file)
 		}
 
 		val dir = new File(resPath)
 		val resultDir = ctrl.addFile("dir", dir)
-		assert(!resultDir.isSuccessfully)
 
 		resultDir match {
-			case err@NotAFile(errFile) =>
-				assert(err.mkHuman.contains("not a file"))
+			case err@Failure(errFile, why) =>
+				assert(why.contains("not a file"))
 				assert(errFile.getPath == resPath)
 		}
 
 		val notScala = new File(s"$resPath/notScalaFile.java")
-		val files = Set(file, dir, notScala)
+		val files = Set(notScala, dir, file)
 		val res = ctrl.addFiles("multiple", files)
-		var c = 0
-		res foreach {
-			case ExtensionExcluded(f) =>
-				assert(f == notScala)
-				c += 1
-			case FileNotExists(errFile) =>
-				assert(errFile == file)
-				c += 1
-			case NotAFile(errFile) =>
-				assert(errFile == dir)
-				c += 1
-			case _ =>
+		res match {
+			case Failure(who, why) =>
+				assert(who == dir)
+				assert(why.contains("not a file"))
 		}
-
-		assert(c == 3)
 	}
 
 	it should "recursively add a folder recursively" in {
@@ -86,8 +81,9 @@ class AIRelationControllerTest extends FlatSpec{
 		val interactor = new AIRelationInteractor(presenter, gateway)
 		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
 
-		ctrl.addFilesRecursively("folder", path) foreach {
-			case ExtensionExcluded(f) => assert(f == new File(s"$path/subfolder/notScalaFile.java"))
+		ctrl.addFilesRecursively("folder", path) match {
+			case Warning(logs) =>
+				assert(logs.count(log => log.fount == new File(s"$path/subfolder/notScalaFile.java")) == 1)
 			case _ =>
 		}
 

@@ -2,10 +2,13 @@ package io.sam.main
 
 import java.io.{File, PrintWriter}
 
-import io.sam.controllers.AIRelationController
+import io.sam.controllers._
+import io.sam.controllers.result.{Failure, Warning}
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway}
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.AIRelationJSONView
+
+import scala.io.StdIn
 
 object CLI extends App {
 
@@ -24,10 +27,18 @@ object CLI extends App {
 		val view = new AIRelationJSONView(callbackView)
 		val presenter = new AIRelationScreenPresenter(view)
 		val interactor = new AIRelationInteractor(presenter, ignored)
-		val controller = new AIRelationController(interactor)
+		val config = ProjectConfig.ScalaGradle()
+		val controller = new AIRelationController(interactor, config)
 
-		controller.addFilesRecursively("domain", "/Users/MatteoPellegrino/Documents/Dev/Project/sam/domain")
-		controller.addFilesRecursively("core", "/Users/MatteoPellegrino/Documents/Dev/Project/sam/core")
+		val projectPath = StdIn.readLine()
+
+		controller.addProject(projectPath) match {
+			case Warning(logs) =>
+				println(logs)
+			case Failure(who, why) =>
+				println(s"Error by $who: $why")
+				return
+		}
 
 		controller.submit()
 	}

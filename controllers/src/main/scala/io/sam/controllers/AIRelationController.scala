@@ -16,63 +16,85 @@ class AIRelationController(inputBoundary: InputBoundary, config: Config) {
 
 	def snapshot: Map[String, Set[(String, File)]] = data.toMap
 
-	def addProject(path: String): Seq[Result] = {
+	def addProject(path: String): Result[File] = {
 		val dir = new File(path)
-		if (!dir.exists() || !dir.isDirectory)
-			return Seq(NotADirectory(dir))
+		if (!dir.exists())
+			return Failure(dir, s"${dir.getCanonicalPath} does not exists")
 
-		var results = Seq[Result]()
+		if(!dir.isDirectory)
+			return Failure(dir, s"${dir.getCanonicalPath} is not a directory")
+
+		var wrns = Warning(Seq[Log[File]]())
 
 		config match{
 			case ProjectConfig.ScalaGradle() =>
 				dir.listFiles().filterNot(config.excludeClause) foreach { dir =>
-					results = results ++ addFilesRecursively(dir.getName, dir.getCanonicalPath)
+					addFilesRecursively(dir.getName, dir.getCanonicalPath) match {
+						case w @Warning(logs) =>
+							wrns = w.copy(logs = logs ++ wrns.logs)
+						case _ =>
+					}
 				}
-
-			case _ =>
-				return Seq(InvalidConfig())
 		}
 
-		results
+		wrns
 	}
 
-	def addFilesRecursively(path: String): Seq[Result] = addFilesRecursively(path, path)
+	def addFilesRecursively(path: String): Result[File] = addFilesRecursively(path, path)
 
-	def addFilesRecursively(moduleName: String, path: String): Seq[Result] = {
-		var results = Seq[Result]()
+	def addFilesRecursively(moduleName: String, path: String): Result[File] = {
+		var wrns = Warning(Seq[Log[File]]())
 		Files.walk(Paths.get(path)).distinct().forEach{ path =>
-			results = results :+ addFile(moduleName, new File(path.toString))
+			addFile(moduleName, new File(path.toString)) match {
+				case w @Warning(logs) =>
+					wrns = w.copy(logs = logs ++ wrns.logs)
+				case _ =>
+			}
 		}
-		results
+		wrns
 	}
 
-	def addFiles(moduleName: String, resources: Set[File]): Seq[Result] = {
-		var results = Seq[Result]()
+	def addFiles(moduleName: String, resources: Set[File]): Result[File] = {
+		var wrns = Warning(Seq[Log[File]]())
 		resources.foreach { f =>
-			results = results :+ addFile(moduleName, f)
+			addFile(moduleName, f) match {
+				case f @ Failure(_, _) =>
+					return f
+				case w @Warning(logs) =>
+					wrns = w.copy(logs = logs ++ wrns.logs)
+				case _ =>
+			}
 		}
-		results
+		wrns
 	}
 
-	def addFile(moduleName: String, file: File): Result = {
+	def addFile(moduleName: String, file: File): Result[File] = {
 		if (!file.exists())
-			return FileNotExists(file)
+			return Failure(file, s"$file does not exists")
 
 		if (!file.isFile)
-			return NotAFile(file)
+			return Failure(file, s"$file is not a file")
+
+		if (config.excludeClause.apply(file))
+			return Failure(file, s"$file excluded by configuration clause ${config.excludeClause}")
 
 		file.getName match{
 			case extensionRegExp(ext) =>
-				if (!config.acceptExtension.contains(ext))
-					return ExtensionExcluded(file)
+				if (config.acceptExtension.nonEmpty && !config.acceptExtension.contains(ext))
+					return Warning(Seq(new Log[File] {
+						override val fount: File = file
+						override val log: String = s"$ext extension is not accepted"
+					}))
 
 				if (!data.contains(moduleName))
 					data += (moduleName -> Set())
 
 				data(moduleName) += (file.getCanonicalPath -> file)
 				Success(file)
-			case _ =>
-				ExtensionExcluded(file)
+			case _ => Warning(Seq(new Log[File] {
+				override val fount: File = file
+				override val log: String = s"$file extension not recognized"
+			}))
 		}
 	}
 
