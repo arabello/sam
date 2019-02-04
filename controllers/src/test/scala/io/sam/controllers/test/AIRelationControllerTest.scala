@@ -2,8 +2,8 @@ package io.sam.controllers.test
 
 import java.io.File
 
-import io.sam.controllers.AIRelationController
-import io.sam.controllers.result.{FileNotExists, NotAFile, NotScalaFile}
+import io.sam.controllers.result.{ExtensionExcluded, FileNotExists, NotAFile}
+import io.sam.controllers.{AIRelationController, ProjectConfig}
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway, OutputBoundary, OutputData}
 import org.scalatest.FlatSpec
 
@@ -17,7 +17,7 @@ class AIRelationControllerTest extends FlatSpec{
 
 	"AIRElationController" should "add a file to a new module" in {
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor)
+		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
 		val file = new File(s"$resPath/1.scala")
 
 		assert(ctrl.addFile("newModule", file).isSuccessfully)
@@ -27,7 +27,7 @@ class AIRelationControllerTest extends FlatSpec{
 
 	it should "add a file to an existing module" in {
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor)
+		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
 		val file = new File(s"$resPath/1.scala")
 
 		ctrl.addFile("existingModule", new File(s"$resPath/2.scala"))
@@ -39,7 +39,7 @@ class AIRelationControllerTest extends FlatSpec{
 
 	it should "report errors" in {
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor)
+		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
 		val file = new File(s"$resPath/notExists")
 
 		val result = ctrl.addFile(file.getCanonicalPath, file)
@@ -66,7 +66,7 @@ class AIRelationControllerTest extends FlatSpec{
 		val res = ctrl.addFiles("multiple", files)
 		var c = 0
 		res foreach {
-			case NotScalaFile(f) =>
+			case ExtensionExcluded(f) =>
 				assert(f == notScala)
 				c += 1
 			case FileNotExists(errFile) =>
@@ -81,16 +81,32 @@ class AIRelationControllerTest extends FlatSpec{
 		assert(c == 3)
 	}
 
-	it should "recursively read a folder" in {
+	it should "recursively add a folder recursively" in {
 		val path = s"$resPath/folder"
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor)
+		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
 
 		ctrl.addFilesRecursively("folder", path) foreach {
-			case NotScalaFile(f) => assert(f == new File(s"$path/subfolder/notScalaFile.java"))
+			case ExtensionExcluded(f) => assert(f == new File(s"$path/subfolder/notScalaFile.java"))
 			case _ =>
 		}
 
 		assert(ctrl.snapshot("folder").size == 3)
+	}
+
+	it should "recursively add a gradle project folder" in {
+		val path = s"$resPath/sam copy"
+		val interactor = new AIRelationInteractor(presenter, gateway)
+		val ctrl = new AIRelationController(interactor, ProjectConfig.ScalaGradle())
+
+		ctrl.addProject(path)
+
+		assert(ctrl.snapshot.size == 6)
+		assert(ctrl.snapshot.contains("controllers"))
+		assert(ctrl.snapshot.contains("core"))
+		assert(ctrl.snapshot.contains("domain"))
+		assert(ctrl.snapshot.contains("presenters"))
+		assert(ctrl.snapshot.contains("view"))
+		println(ctrl.snapshot)
 	}
 }

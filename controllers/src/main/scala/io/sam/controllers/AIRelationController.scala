@@ -8,15 +8,33 @@ import io.sam.domain.airelation.{InputBoundary, InputData}
 
 import scala.io.Source
 
-class AIRelationController(inputBoundary: InputBoundary) {
-	final val FILE_EXT = "scala"
-
+class AIRelationController(inputBoundary: InputBoundary, config: Config) {
 	private val data = scala.collection.mutable.Map[String, Set[(String, File)]]()
 	private val extensionRegExp = """.*\.(\w+)""".r
 
 	def clear(): Unit = {data.keys foreach( key => data.remove(key))}
 
 	def snapshot: Map[String, Set[(String, File)]] = data.toMap
+
+	def addProject(path: String): Seq[Result] = {
+		val dir = new File(path)
+		if (!dir.exists() || !dir.isDirectory)
+			return Seq(NotADirectory(dir))
+
+		var results = Seq[Result]()
+
+		config match{
+			case ProjectConfig.ScalaGradle() =>
+				dir.listFiles().filterNot(config.excludeClause) foreach { dir =>
+					results = results ++ addFilesRecursively(dir.getName, dir.getCanonicalPath)
+				}
+
+			case _ =>
+				return Seq(InvalidConfig())
+		}
+
+		results
+	}
 
 	def addFilesRecursively(path: String): Seq[Result] = addFilesRecursively(path, path)
 
@@ -45,8 +63,8 @@ class AIRelationController(inputBoundary: InputBoundary) {
 
 		file.getName match{
 			case extensionRegExp(ext) =>
-				if (ext != FILE_EXT)
-					return NotScalaFile(file)
+				if (!config.acceptExtension.contains(ext))
+					return ExtensionExcluded(file)
 
 				if (!data.contains(moduleName))
 					data += (moduleName -> Set())
@@ -54,7 +72,7 @@ class AIRelationController(inputBoundary: InputBoundary) {
 				data(moduleName) += (file.getCanonicalPath -> file)
 				Success(file)
 			case _ =>
-				NotScalaFile(file)
+				ExtensionExcluded(file)
 		}
 	}
 
