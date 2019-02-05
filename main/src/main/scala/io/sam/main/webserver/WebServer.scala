@@ -12,12 +12,12 @@ import io.sam.view.airelation.AIRelationJSONView
 
 import scala.io.StdIn
 
-object WebServer {
+object WebServer extends CORSHandler {
 
 	val HOST = "localhost"
 	val PORT = 8080
 
-	implicit val system = ActorSystem("my-system")
+	implicit val system = ActorSystem("sam")
 	implicit val materializer = ActorMaterializer()
 	// needed for the future flatMap/onComplete in the end
 	implicit val executionContext = system.dispatcher
@@ -27,7 +27,7 @@ object WebServer {
 	def main(args: Array[String]) {
 		val routes =
 			path("") {
-				get {
+				post {
 					var data: String = ""
 
 					val view = new AIRelationJSONView({ json => data = json})
@@ -38,8 +38,9 @@ object WebServer {
 					controller.addProject("/Users/MatteoPellegrino/Documents/Dev/Project/sam")
 
 					controller.submit()
-
-					complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, data))
+					corsHandler(
+						complete(HttpEntity(ContentTypes.`text/html(UTF-8)`, data))
+					)
 				}
 			}
 
