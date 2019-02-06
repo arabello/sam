@@ -1,17 +1,31 @@
 package io.sam.controllers.result
 
-sealed trait Result[W]
 
-trait Log[L]{
+sealed trait Log[L] {
 	val fount: L
 	val log: String
 }
 
-case class Success[S](who: S) extends Result[S]
+trait Result[W]{
+	val report: Seq[Log[W]]
+}
 
-case class Warning[W](logs: Seq[Log[W]]) extends Result[W]
+case class Success[S](who: S) extends Log[S] {
+	override val fount: S = who
+	override val log: String = ""
+}
 
-case class Failure[F](who: F, why: String) extends Result[F] with Log[F] {
-	override val fount: F = fount
-	override val log: String = log
+case class Failure[F](who: F, why: String) extends Log[F] {
+	override val fount: F = who
+	override val log: String = why
+}
+
+object Result{
+	def mkSuccess[W](who: W): Result[W] = new Result[W] {
+		override val report: Seq[Log[W]] = Seq(new Success[W](who))
+	}
+
+	def mkFailure[W](who: W, why: String): Result[W] = new Result[W] {
+		override val report: Seq[Log[W]] = Seq(new Failure[W](who, why))
+	}
 }

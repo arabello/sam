@@ -1,7 +1,8 @@
 package io.sam.controllers
 
 import java.io.File
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
+import java.util.stream.Collectors
 
 import io.sam.controllers.result._
 import io.sam.domain.airelation.{InputBoundary, InputData}
@@ -9,12 +10,16 @@ import io.sam.domain.airelation.{InputBoundary, InputData}
 import scala.io.Source
 
 class AIRelationController(inputBoundary: InputBoundary, config: Config) {
-	private val data = scala.collection.mutable.Map[String, Set[(String, File)]]()
 	private val extensionRegExp = """.*\.(\w+)""".r
 
-	def clear(): Unit = {data.keys foreach( key => data.remove(key))}
+	type FileId = String
+	type ModuleSources = Set[(FileId, File)]
+	type ModuleName = String
+	type State = Map[ModuleName, ModuleSources]
 
-	def snapshot: Map[String, Set[(String, File)]] = data.toMap
+	private var data: State = Map()
+
+	val snapshot: State = data
 
 	def addProject(path: String): Result[File] = {
 		val dir = new File(path)
@@ -40,76 +45,52 @@ class AIRelationController(inputBoundary: InputBoundary, config: Config) {
 		wrns
 	}
 
+	private def walkTree(file: File): Iterable[File] = {
+		val children = new Iterable[File] {
+			def iterator = if (file.isDirectory) file.listFiles.iterator else Iterator.empty
+		}
+		Seq(file) ++: children.flatMap(walkTree)
+	}
+
 	def addFilesRecursively(path: String): Result[File] = addFilesRecursively(path, path)
 
-	def addFilesRecursively(moduleName: String, path: String): Result[File] = {
-		var wrns = Warning(Seq[Log[File]]())
-		Files.walk(Paths.get(path)).distinct().forEach{ path =>
-			addFile(moduleName, new File(path.toString)) match {
-				case w @Warning(logs) =>
-					wrns = w.copy(logs = logs ++ wrns.logs)
-				case _ =>
+	def addFilesRecursively(moduleName: String, path: String): Result[File] =
+		walkTree(new File(path))
+			.map(file => addFile(moduleName, file))
+			.fold[Result[File]](new Result[File] {override val report: Seq[Log[File]] = Seq()}) { (acc, res) =>
+				new Result[File] {
+					override val report: Seq[Log[File]] = acc.report ++ res.report
+				}
 			}
-		}
-		wrns
-	}
-
-	def addFiles(moduleName: String, resources: Set[File]): Result[File] = {
-		var wrns = Warning(Seq[Log[File]]())
-		resources.foreach { f =>
-			addFile(moduleName, f) match {
-				case f @ Failure(_, _) =>
-					return f
-				case w @Warning(logs) =>
-					wrns = w.copy(logs = logs ++ wrns.logs)
-				case _ =>
-			}
-		}
-		wrns
-	}
 
 	def addFile(moduleName: String, file: File): Result[File] = {
-		if (!file.exists())
-			return Failure(file, s"$file does not exists")
-
 		if (!file.isFile)
-			return Failure(file, s"$file is not a file")
+			return Result.mkFailure(file, s"$file is not a file")
+
+		if (!file.exists())
+			return Result.mkFailure(file, s"$file does not exists")
 
 		if (config.excludeClause.apply(file))
-			return Failure(file, s"$file excluded by configuration clause ${config.excludeClause}")
+			return Result.mkFailure(file, s"$file excluded by configuration clause ${config.excludeClause}")
 
 		file.getName match{
 			case extensionRegExp(ext) =>
 				if (config.acceptExtension.nonEmpty && !config.acceptExtension.contains(ext))
-					return Warning(Seq(new Log[File] {
-						override val fount: File = file
-						override val log: String = s"$ext extension is not accepted"
-					}))
-
-				if (!data.contains(moduleName))
-					data += (moduleName -> Set())
+					return Result.mkFailure(file, s"$ext extension is not accepted")
 
 				data(moduleName) += (file.getCanonicalPath -> file)
-				Success(file)
-			case _ => Warning(Seq(new Log[File] {
-				override val fount: File = file
-				override val log: String = s"$file extension not recognized"
-			}))
+
+				Result.mkSuccess(file)
+			case _ => Result.mkFailure(file, s"$file extension not recognized")
 		}
 	}
 
 	def submit(): Unit = {
-		var components = Map[String, Set[(String, Source)]]()
+		val fileToSource = (from: Set[(String, File)]) =>
+			from.map(tuple => tuple._1 -> Source.fromFile(tuple._2).asInstanceOf[Source])
 
-		data foreach { case (compName, srcs) =>
-			var res = Set[(String, Source)]()
-			srcs foreach{ case (srcName, src) =>
-				res += (srcName -> Source.fromFile(src))
-			}
-			components += (compName -> res)
-		}
+		val inputData = data.map(row => (row._1, fileToSource(row._2)))
 
-		val inputData = InputData(components)
-		inputBoundary.measure(inputData)
+		inputBoundary.measure(InputData(inputData))
 	}
 }
