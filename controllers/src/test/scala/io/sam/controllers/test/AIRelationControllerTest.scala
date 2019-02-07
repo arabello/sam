@@ -25,7 +25,7 @@ class AIRelationControllerTest extends FlatSpec{
 			case _ => fail()
 		}
 		assert(ctrl.snapshot.contains("newModule"))
-		assert(ctrl.snapshot("newModule").contains(file.getCanonicalPath -> file))
+		assert(ctrl.snapshot("newModule").contains(file.getPath -> file))
 	}
 
 	it should "add a file to an existing module" in {
@@ -48,31 +48,19 @@ class AIRelationControllerTest extends FlatSpec{
 		val ctrl = new AIRelationController(interactor, ProjectConfig.None())
 		val file = new File(s"$resPath/notExists")
 
-		val result = ctrl.addFile(file.getCanonicalPath, file)
-
-
-		result match {
-			case err @ Failure(errFile, why) =>
+		ctrl.addFile(file.getPath, file) match {
+			case err @ Failure(who, why) =>
 				assert(why.contains("not exist"))
-				assert(errFile == file)
+				assert(who == file)
 		}
 
 		val dir = new File(resPath)
-		val resultDir = ctrl.addFile("dir", dir)
 
-		resultDir match {
-			case err@Failure(errFile, why) =>
+		ctrl.addFile("dir", dir) match {
+			case Failure(who: File, why) =>
 				assert(why.contains("not a file"))
-				assert(errFile.getPath == resPath)
-		}
-
-		val notScala = new File(s"$resPath/notScalaFile.java")
-		val files = Set(notScala, dir, file)
-		val res = ctrl.addFiles("multiple", files)
-		res match {
-			case Failure(who, why) =>
-				assert(who == dir)
-				assert(why.contains("not a file"))
+				assert(who.getPath == resPath)
+			case _ => fail()
 		}
 	}
 
@@ -81,10 +69,16 @@ class AIRelationControllerTest extends FlatSpec{
 		val interactor = new AIRelationInteractor(presenter, gateway)
 		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
 
+		val check = new File (s"$path/subfolder/notScalaFile.java")
+
 		ctrl.addFilesRecursively("folder", path) match {
-			case Warning(logs) =>
-				assert(logs.count(log => log.fount == new File(s"$path/subfolder/notScalaFile.java")) == 1)
-			case _ =>
+			case Logs(logs, _) => for (log <- logs) log match {
+					case Failure(who, why) =>
+						assert(who == check)
+						assert(why.contains("extension is not accepted"))
+					case _ => fail()
+				}
+			case _ => fail()
 		}
 
 		assert(ctrl.snapshot("folder").size == 3)
