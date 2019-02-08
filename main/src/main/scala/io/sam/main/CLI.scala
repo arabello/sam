@@ -3,7 +3,7 @@ package io.sam.main
 import java.io.{File, PrintWriter}
 
 import io.sam.controllers._
-import io.sam.controllers.result.{Failure, Warning}
+import io.sam.controllers.result.{Failure}
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway}
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.AIRelationJSONView
@@ -27,14 +27,12 @@ object CLI extends App {
 		val view = new AIRelationJSONView(callbackView)
 		val presenter = new AIRelationScreenPresenter(view)
 		val interactor = new AIRelationInteractor(presenter, ignored)
-		val config = ProjectConfig.ScalaGradle()
+		val config = Config.Gradle()
 		val controller = new AIRelationController(interactor, config)
 
 		val projectPath = StdIn.readLine()
 
 		controller.addProject(projectPath) match {
-			case Warning(logs) =>
-				println(logs)
 			case Failure(who, why) =>
 				println(s"Error by $who: $why")
 				return

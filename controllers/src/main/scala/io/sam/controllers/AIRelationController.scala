@@ -19,16 +19,14 @@ class AIRelationController(inputBoundary: InputBoundary, config: Config) {
 		if(!dir.isDirectory)
 			return Failure(dir, s"${dir.getPath} is not a directory")
 
-		config match{
-			case ProjectConfig.ScalaGradle() =>
-				dir.listFiles()
-					.filterNot(config.excludeClause)
-					.map( dir => addFilesRecursively(dir.getName, dir.getPath))
-					.fold[Result[File]](Logs(Seq(), dir)) {
-						(acc, curr) =>
-							val instance = acc.asInstanceOf[Logs[File]]
-							instance.copy(logs = instance.logs ++ curr.asInstanceOf[Logs[File]].logs)
-					}
+		dir.listFiles()
+			.filter(dir => dir.isDirectory)
+    		.filterNot(config.excludeModule)
+			.map( dir => addFilesRecursively(dir.getName, s"${dir.getPath}/${config.relativeMainSrcPath}") )
+			.fold[Result[File]](Logs(Seq(), dir)) {
+				(acc, curr) =>
+					val instance = acc.asInstanceOf[Logs[File]]
+					instance.copy(logs = instance.logs :+ curr)
 		}
 	}
 
@@ -47,27 +45,28 @@ class AIRelationController(inputBoundary: InputBoundary, config: Config) {
 			return Failure(start, s"${start.getPath} is not a directory")
 
 		walkTree(start)
+    		.filter(file => file.isFile)
 			.map(file => addFile(moduleName, file))
 			.fold[Result[File]](Logs(Seq(), start)) {
 				(acc, curr) =>
 				val instance = acc.asInstanceOf[Logs[File]]
-				instance.copy(logs = instance.logs ++ curr.asInstanceOf[Logs[File]].logs)
+				instance.copy(logs = instance.logs :+ curr)
 			}
 	}
 
 	def addFile(moduleName: String, file: File): Result[File] = {
-		if (!file.isFile)
-			return Failure(file, s"$file is not a file")
-
 		if (!file.exists())
 			return Failure(file, s"$file does not exists")
 
-		if (config.excludeClause.apply(file))
-			return Failure(file, s"$file excluded by configuration clause ${config.excludeClause}")
+		if (!file.isFile)
+			return Failure(file, s"$file is not a file")
+
+		if (config.excludeFile.apply(file))
+			return Failure(file, s"$file excluded by configuration clause ${config.excludeFile}")
 
 		file.getName match{
 			case extensionRegExp(ext) =>
-				if (config.acceptExtension.nonEmpty && !config.acceptExtension.contains(ext))
+				if (config.acceptFileExtension.nonEmpty && !config.acceptFileExtension.contains(ext))
 					return Failure(file, s"$ext extension is not accepted")
 
 				if (!data.contains(moduleName))

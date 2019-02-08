@@ -42,7 +42,7 @@ class AIRelationTest extends FlatSpec{
 
 		object presenter extends OutputBoundary{
 			override def deliver(outputData: OutputData): Unit = {
-				assert(condition = true)
+				assert(true)
 			}
 		}
 		new AIRelationInteractor(presenter, gateway).measure(inputData)

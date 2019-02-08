@@ -5,7 +5,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
-import io.sam.controllers.{AIRelationController, ProjectConfig}
+import io.sam.controllers.{AIRelationController, Config}
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway}
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.AIRelationJSONView
@@ -33,7 +33,7 @@ object WebServer extends CORSHandler {
 					val view = new AIRelationJSONView({ json => data = json})
 					val presenter = new AIRelationScreenPresenter(view)
 					val interactor = new AIRelationInteractor(presenter, ignoredDataway)
-					val controller = new AIRelationController(interactor, ProjectConfig.ScalaGradle())
+					val controller = new AIRelationController(interactor, Config.Gradle())
 
 					controller.addProject("/Users/MatteoPellegrino/Documents/Dev/Project/sam")
 

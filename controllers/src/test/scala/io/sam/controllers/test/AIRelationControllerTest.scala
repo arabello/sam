@@ -3,7 +3,7 @@ package io.sam.controllers.test
 import java.io.File
 
 import io.sam.controllers.result._
-import io.sam.controllers.{AIRelationController, ProjectConfig}
+import io.sam.controllers.{AIRelationController, Config}
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway, OutputBoundary, OutputData}
 import org.scalatest.FlatSpec
 
@@ -15,10 +15,26 @@ class AIRelationControllerTest extends FlatSpec{
 
 	val resPath = "controllers/src/test/resources"
 
-	"AIRElationController" should "add a file to a new module" in {
+	"AIRElationController" should "add a file" in {
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor, ProjectConfig.None())
+		val ctrl = new AIRelationController(interactor, Config.Simple(Config.SCALA_EXT))
 		val file = new File(s"$resPath/1.scala")
+		val errFile = new File("notExist")
+		val errDir = new File(s"$resPath")
+
+		ctrl.addFile("error", errFile) match {
+			case Failure(who, why) =>
+				assert(who == errFile)
+				assert(why.contains("does not exists"))
+			case _ => fail()
+		}
+
+		ctrl.addFile("error", errDir) match {
+			case Failure(who, why) =>
+				assert(who == errDir)
+				assert(why.contains("is not a file"))
+			case _ => fail()
+		}
 
 		ctrl.addFile("newModule", file) match {
 			case Success(f) => assert(file == f)
@@ -28,66 +44,39 @@ class AIRelationControllerTest extends FlatSpec{
 		assert(ctrl.snapshot("newModule").contains(file.getPath -> file))
 	}
 
-	it should "add a file to an existing module" in {
-		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor, ProjectConfig.None())
-		val file = new File(s"$resPath/1.scala")
-
-		ctrl.addFile("existingModule", new File(s"$resPath/2.scala"))
-
-		ctrl.addFile("existingModule", file) match {
-			case Success(f) => assert(file == f)
-			case _ => fail()
-		}
-		assert(ctrl.snapshot.contains("existingModule"))
-		assert(ctrl.snapshot("existingModule").size == 2)
-	}
-
-	it should "report errors" in {
-		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor, ProjectConfig.None())
-		val file = new File(s"$resPath/notExists")
-
-		ctrl.addFile(file.getPath, file) match {
-			case err @ Failure(who, why) =>
-				assert(why.contains("not exist"))
-				assert(who == file)
-		}
-
-		val dir = new File(resPath)
-
-		ctrl.addFile("dir", dir) match {
-			case Failure(who: File, why) =>
-				assert(why.contains("not a file"))
-				assert(who.getPath == resPath)
-			case _ => fail()
-		}
-	}
-
-	it should "recursively add a folder recursively" in {
+	it should "add files recursively in a folder" in {
 		val path = s"$resPath/folder"
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor, ProjectConfig.Scala())
-
+		val ctrl = new AIRelationController(interactor, Config.Simple(Config.SCALA_EXT))
 		val check = new File (s"$path/subfolder/notScalaFile.java")
 
 		ctrl.addFilesRecursively("folder", path) match {
-			case Logs(logs, _) => for (log <- logs) log match {
+			case Logs(logs, _) =>
+				for (log <- logs) log match {
 					case Failure(who, why) =>
 						assert(who == check)
 						assert(why.contains("extension is not accepted"))
-					case _ => fail()
+					case _ =>
 				}
 			case _ => fail()
 		}
 
 		assert(ctrl.snapshot("folder").size == 3)
+		assert(ctrl.snapshot("folder").contains((s"$resPath/folder/2.scala", new File(s"$resPath/folder/2.scala"))))
+		assert(ctrl.snapshot("folder").contains((s"$resPath/folder/subfolder/1.scala", new File(s"$resPath/folder/subfolder/1.scala"))))
+		assert(ctrl.snapshot("folder").contains((s"$resPath/folder/subfolder/supersubfolder/1.scala", new File(s"$resPath/folder/subfolder/supersubfolder/1.scala"))))
 	}
 
-	it should "recursively add a gradle project folder" in {
-		val path = s"$resPath/sam copy"
+	it should "add project as a folder using scala/gradle config" in {
+		val path = s"$resPath/add-project-gradle"
 		val interactor = new AIRelationInteractor(presenter, gateway)
-		val ctrl = new AIRelationController(interactor, ProjectConfig.ScalaGradle())
+		val config = Config.Gradle(Config.SCALA_EXT)
+		val ctrl = new AIRelationController(interactor, config)
+
+		ctrl.addProject("/err") match {
+			case Failure(who, _) => assert(who == new File("/err"))
+			case _ => fail()
+		}
 
 		ctrl.addProject(path)
 
