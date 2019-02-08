@@ -32,6 +32,6 @@ object Config {
 		override val acceptFileExtension: Set[String] = extension
 		override val relativeMainSrcPath: String = "src/main"
 		override val excludeModule: File => Boolean = file =>
-			Default.excludeFile(file) || file.getName == "gradle"
+			Default.excludeFile(file) || file.getName == "gradle" || file.getName == "out" || file.getName == "build"
 	}
 }

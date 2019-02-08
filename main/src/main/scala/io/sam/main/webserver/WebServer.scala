@@ -1,10 +1,13 @@
 package io.sam.main.webserver
 
+import java.io.File
+
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
+import io.sam.controllers.result.{Failure, Logs, Success}
 import io.sam.controllers.{AIRelationController, Config}
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway}
 import io.sam.presenters.airelation.AIRelationScreenPresenter
@@ -33,9 +36,18 @@ object WebServer extends CORSHandler {
 					val view = new AIRelationJSONView({ json => data = json})
 					val presenter = new AIRelationScreenPresenter(view)
 					val interactor = new AIRelationInteractor(presenter, ignoredDataway)
-					val controller = new AIRelationController(interactor, Config.Gradle())
+					object config extends Config.Gradle(Config.SCALA_EXT)
+					val controller = new AIRelationController(interactor, Config.Gradle(Config.SCALA_EXT))
 
-					controller.addProject("/Users/MatteoPellegrino/Documents/Dev/Project/sam")
+					controller.addProject("/Users/MatteoPellegrino/Documents/Dev/Project/sam") match {
+						case Logs(logs) =>
+							for(log <- logs) log match {
+								case Failure(who, why) => println(s"Error: $why")
+								case Success(who) => println(s"Add $who")
+								case _ =>
+							}
+						case _ =>
+					}
 
 					controller.submit()
 					corsHandler(
