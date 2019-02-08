@@ -14,20 +14,18 @@ class AIRelationController(inputBoundary: InputBoundary, config: Config) {
 
 	def snapshot: Map[String, Set[(String, File)]] = data
 
-	def addProject(path: String): Result[File] = {
+	def addProject(path: String): Logs[File] = {
 		val dir = new File(path)
 		if(!dir.isDirectory)
-			return Failure(dir, s"${dir.getPath} is not a directory")
+			return Logs(Seq(Failure(dir, s"${dir.getPath} is not a directory")))
 
 		dir.listFiles()
 			.filter(dir => dir.isDirectory)
     		.filterNot(config.excludeModule)
 			.map( dir => addFilesRecursively(dir.getName, s"${dir.getPath}/${config.relativeMainSrcPath}") )
-			.fold[Result[File]](Logs(Seq(), dir)) {
-				(acc, curr) =>
-					val instance = acc.asInstanceOf[Logs[File]]
-					instance.copy(logs = instance.logs :+ curr)
-		}
+			.foldLeft[Logs[File]](Logs(Seq())) {
+				(acc, curr) => acc.copy(logs = acc.logs ++ curr.logs)
+			}
 	}
 
 	private def walkTree(file: File): Iterable[File] = {
@@ -37,20 +35,18 @@ class AIRelationController(inputBoundary: InputBoundary, config: Config) {
 		Seq(file) ++: children.flatMap(walkTree)
 	}
 
-	def addFilesRecursively(path: String): Result[File] = addFilesRecursively(path, path)
+	def addFilesRecursively(path: String): Logs[File] = addFilesRecursively(path, path)
 
-	def addFilesRecursively(moduleName: String, path: String): Result[File] = {
+	def addFilesRecursively(moduleName: String, path: String): Logs[File] = {
 		val start = new File(path)
 		if(!start.isDirectory)
-			return Failure(start, s"${start.getPath} is not a directory")
+			return Logs(Seq(Failure(start, s"${start.getPath} is not a directory")))
 
 		walkTree(start)
     		.filter(file => file.isFile)
 			.map(file => addFile(moduleName, file))
-			.fold[Result[File]](Logs(Seq(), start)) {
-				(acc, curr) =>
-				val instance = acc.asInstanceOf[Logs[File]]
-				instance.copy(logs = instance.logs :+ curr)
+			.foldLeft[Logs[File]](Logs(Seq())) {
+				(acc, curr) => acc.copy(logs = acc.logs :+ curr)
 			}
 	}
 

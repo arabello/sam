@@ -51,7 +51,7 @@ class AIRelationControllerTest extends FlatSpec{
 		val check = new File (s"$path/subfolder/notScalaFile.java")
 
 		ctrl.addFilesRecursively("folder", path) match {
-			case Logs(logs, _) =>
+			case Logs(logs) =>
 				for (log <- logs) log match {
 					case Failure(who, why) =>
 						assert(who == check)
@@ -74,7 +74,9 @@ class AIRelationControllerTest extends FlatSpec{
 		val ctrl = new AIRelationController(interactor, config)
 
 		ctrl.addProject("/err") match {
-			case Failure(who, _) => assert(who == new File("/err"))
+			case Logs(logs) =>
+				assert(logs.size == 1)
+				assert(logs(0).fount == new File("/err"))
 			case _ => fail()
 		}
 

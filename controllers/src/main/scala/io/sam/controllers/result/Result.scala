@@ -15,7 +15,4 @@ case class Failure[F](who: F, why: String) extends Result[F] {
 	override val log: String = why
 }
 
-case class Logs[L](logs: Seq[Result[L]], who: L) extends Result[L] {
-	override val fount: L = who
-	override val log: String = ""
-}
+case class Logs[L](logs: Seq[Result[L]])
