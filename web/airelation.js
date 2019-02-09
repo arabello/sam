@@ -2,7 +2,7 @@ $(function() {
     var ctx = document.getElementById("chart").getContext('2d');
 
     $.ajax({
-        method: "POST",
+        method: "GET",
         url: "http://localhost:8080",
         dataType: "json",
         success: function (data) {
