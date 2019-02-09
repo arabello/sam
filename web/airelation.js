@@ -17,6 +17,7 @@ $(function() {
                 datasets: jsonData.datasets
             },
             options: {
+                aspectRatio: 1,
                 scales: {
                     xAxes: [{
                         ticks: {
@@ -33,5 +34,7 @@ $(function() {
                 }
             }
         });
+
+        chart.generateLegend();
     }
 });

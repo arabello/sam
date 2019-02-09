@@ -13,7 +13,8 @@ class AIRelationJSONView(callback: String => Unit) extends AIRelationScreenView{
 
 	implicit val datasetWrites: Writes[Dataset] = (
 		(JsPath \ "label").write[String] and
-		(JsPath \ "data").write[Seq[Point]]
+		(JsPath \ "data").write[Seq[Point]] and
+		(JsPath \ "backgroundColor").write[String]
 	)(unlift(Dataset.unapply))
 
 	implicit val chartWrites: Writes[Chart] = (
@@ -24,12 +25,16 @@ class AIRelationJSONView(callback: String => Unit) extends AIRelationScreenView{
 	)(unlift(Chart.unapply))
 
 	private val pointRadius = 12 // px
+	private val granularity = 0.01f
+	private val zonePointRadius = 2
 
 	override def receiveUpdate(viewModel: AIRelationViewModel): Unit = {
 
-		val datasets = for(
-			points <- viewModel.points
-		) yield Dataset(points.label, Seq(Point(points.x, points.y, pointRadius)))
+		val datasets =
+			(for(point <- viewModel.points) yield Dataset(point.label, Seq(Point(point.x, point.y, pointRadius)), RGBAColor.randomWithAlpha(0.2f).toString)) +
+			Dataset("Main Sequence", viewModel.mainSequenceLine(granularity).map( p => Point(p.x, p.y, zonePointRadius)), RGBAColor(0,0,0, 1f).toString) +
+			Dataset("Zone of Pain", viewModel.zoneOfPainLine(granularity).map( p => Point(p.x, p.y, zonePointRadius)), RGBAColor(250,0,0, 1f).toString) +
+			Dataset("Zone of Uselessness", viewModel.zoneOfUselessnessLine(granularity).map( p => Point(p.x, p.y, zonePointRadius)), RGBAColor(250,0,0, 1f).toString)
 
 		val chart = Chart(viewModel.title, viewModel.xAxis, viewModel.yAxis, datasets.toSeq)
 		val json = Json.toJson(chart)
