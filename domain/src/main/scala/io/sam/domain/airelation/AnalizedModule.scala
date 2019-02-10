@@ -24,7 +24,7 @@ private case class AnalizedModule(code: Component, packages: Set[String], import
 
 			on.packages foreach{ pck =>
 				if (imp.expr.toString().contains(pck)){
-					nDeps += 1
+					nDeps += imp.selectors.size
 					imp.selectors foreach{ selector =>
 						if (selector.name == Analyzer.termNames.WILDCARD)
 							nDeps += on.numClasses - 1
