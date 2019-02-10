@@ -46,7 +46,6 @@ object WebServer extends CORSHandler {
 		val view = new AIRelationJSONView({ json => data = json})
 		val presenter = new AIRelationScreenPresenter(view)
 		val interactor = new AIRelationInteractor(presenter, ignoredDataway)
-		object config extends Config.Gradle(Config.SCALA_EXT)
 		val controller = new AIRelationController(interactor, Config.Gradle(Config.SCALA_EXT))
 
 		controller.addProject(projectFile.getAbsolutePath) match {

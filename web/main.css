@@ -1,2 +1,13 @@
-.chart-container{
+body{
+    background-color: #ecf0f1;
+}
+
+.sam-title{
+    text-align: center;
+}
+
+.sam-title h1{
+    font-family: 'Major Mono Display', monospace;
+    font-size: 4em;
+    text-align: center;
 }

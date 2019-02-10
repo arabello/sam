@@ -6,6 +6,7 @@ $(function() {
         url: "http://localhost:8080",
         dataType: "json",
         success: function (data) {
+            $("#graph-title").text(data.title);
             createChart(data);
         }
     });
@@ -18,6 +19,9 @@ $(function() {
             },
             options: {
                 aspectRatio: 1,
+                legend:{
+                    position: 'bottom'
+                },
                 scales: {
                     xAxes: [{
                         scaleLabel:{
