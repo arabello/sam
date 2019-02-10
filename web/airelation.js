@@ -20,17 +20,44 @@ $(function() {
                 aspectRatio: 1,
                 scales: {
                     xAxes: [{
+                        scaleLabel:{
+                            display: true,
+                            labelString: "Instability"
+                        },
                         ticks: {
                             beginAtZero:true,
                             max: 1
                         }
                     }],
                     yAxes: [{
+                        scaleLabel:{
+                            display: true,
+                            labelString: "Abstractness"
+                        },
                         ticks: {
                             beginAtZero:true,
                             max: 1
                         }
                     }]
+                },
+                tooltips: {
+                    callbacks: {
+                        label: function(tooltipItem, data) {
+                            var label = data.datasets[tooltipItem.datasetIndex].label;
+
+                            if (tooltipItem.datasetIndex > data.datasets.length - 4){ // Label exceptions (zones and main sequence)
+                                return label
+                            }
+
+
+                            label += ': (I = ';
+                            label += Math.round(tooltipItem.xLabel * 100) / 100;
+                            label += ', A = ';
+                            label += Math.round(tooltipItem.yLabel * 100) / 100;
+                            label += ') ';
+                            return label;
+                        }
+                    }
                 }
             }
         });
