@@ -3,8 +3,7 @@ package io.sam.view.test
 import java.io.{File, PrintWriter}
 
 import io.sam.domain.airelation.MeasuredModule
-import io.sam.presenters.airelation.AIRelationViewModel
-import io.sam.presenters.airelation.graph.Subject
+import io.sam.presenters.airelation.{AIRelationViewModel, PlottedModule}
 import io.sam.view.airelation.AIRelationJSONView
 import org.scalatest.FlatSpec
 
@@ -22,9 +21,9 @@ class AIRelationWebViewTest extends FlatSpec{
 			pw.close()
 		}
 		val view = new AIRelationJSONView(callbackView)
-		var points = Set[Subject]()
+		var points = Set[PlottedModule]()
 		(1 to 5).foreach{ i =>
-			points += Subject(MeasuredModule(s"m$i", math.random().toFloat, math.random().toFloat, math.random().toFloat))
+			points += PlottedModule(MeasuredModule(s"m$i", math.random().toFloat, math.random().toFloat, math.random().toFloat))
 		}
 		val id = math.ceil(math.random() * 100)
 		val viewModel = AIRelationViewModel(s"AI Relation Plot {$id}", "Abstractness", "Instability", points)

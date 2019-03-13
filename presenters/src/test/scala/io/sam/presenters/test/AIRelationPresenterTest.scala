@@ -5,24 +5,24 @@ import io.sam.presenters.airelation.{AIRelationScreenPresenter, AIRelationScreen
 import org.scalatest.FlatSpec
 
 class AIRelationPresenterTest extends FlatSpec{
-	"Presenter" should "presents data" in {
-		val expectedValues = Map(
-			"m1" -> 1.0f,
-			"m2" -> 0.5f,
-			"m3" -> 0.0f
-		)
+	val expectedValues = Map(
+		"m1" -> 1.0f,
+		"m2" -> 0.5f,
+		"m3" -> 0.0f
+	)
 
-		val outputData = OutputData(Set(
-			MeasuredModule("m1", 1.0f, 1.0f, 1.0f),
-			MeasuredModule("m2", 0.5f, 0.5f, 0.5f),
-			MeasuredModule("m3", 0.0f, 0.0f, 0.0f)
-		))
+	val outputData = OutputData(Set(
+		MeasuredModule("m1", 1.0f, 1.0f, 1.0f),
+		MeasuredModule("m2", 0.5f, 0.5f, 0.5f),
+		MeasuredModule("m3", 0.0f, 0.0f, 0.0f)
+	))
 
+	"AIRelationPresenter" should "presents data" in {
 		object view extends AIRelationScreenView{
 			override def receiveUpdate(viewModel: AIRelationViewModel): Unit = {
-				viewModel.points foreach{ subj =>
-					assert(expectedValues(subj.label) == subj.y)
-					assert(expectedValues(subj.label) == subj.x)
+				viewModel.points foreach{ plottedModule =>
+					assert(expectedValues(plottedModule.label) == plottedModule.y)
+					assert(expectedValues(plottedModule.label) == plottedModule.x)
 				}
 			}
 		}
@@ -31,13 +31,13 @@ class AIRelationPresenterTest extends FlatSpec{
 		presenter.deliver(outputData)
 	}
 
-	"AIRelationViewModel" should "describe the AI relation graph" in {
-		val ai = AIRelationViewModel("", "", "", Set())
-		for (p <- ai.zoneOfPainLine(0.01f); u <- ai.zoneOfUselessnessLine(0.01f)){
-			assert(p.y < u.y)
-			assert(p.x < u.x)
-		}
+	it should "describes the AI relation graph" in {
+		for( i <- BigDecimal("0") to BigDecimal("1") by BigDecimal("0.1") ) {
+			val x = i.toFloat
 
-		ai.mainSequenceLine(0.1f).foreach{ p => assert(1 - p.x == p.y)}
+			assert(AIRelationViewModel.mainSequenceLine(x) == 1 - x)
+			assert(AIRelationViewModel.zoneOfPainLine(x) == 0.25f - x)
+			assert(AIRelationViewModel.zoneOfUselessnessLine(x) == 1.75f - x)
+		}
 	}
 }
