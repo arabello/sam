@@ -15,7 +15,7 @@ abstract class AbstractController[T]{
 			stateHistory.head
 	}
 
-	abstract def baseState(): T
+	def baseState(): T
 
-	abstract def submit(): Unit
+	def submit(): Unit
 }

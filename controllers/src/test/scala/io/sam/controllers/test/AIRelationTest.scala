@@ -1,19 +1,69 @@
 package io.sam.controllers.test
 
-import java.io.File
+import java.io.FileNotFoundException
+import java.nio.file.Paths
 
-import io.sam.controllers.result._
-import io.sam.controllers.{AIRelationController, Config}
-import io.sam.domain.airelation.{AIRelationInteractor, DataGateway, OutputBoundary, OutputData}
+import io.sam.controllers.airelation.{SoftwareModule, SourceCodeFile}
+import io.sam.controllers.{Failure, NotScalaFile, Success}
+import io.sam.domain.airelation.{DataGateway, OutputBoundary, OutputData}
 import org.scalatest.FlatSpec
 
-class AIRelationControllerTest extends FlatSpec{
+class AIRelationTest extends FlatSpec{
 	object gateway extends DataGateway{}
 	object presenter extends OutputBoundary{
 		override def deliver(outputData: OutputData): Unit = {}
 	}
 
 	val resPath = "controllers/src/test/resources"
+
+	"SourceCodeFile factory" should "create instance from file" in {
+		val scalaFile = Paths.get(s"$resPath/1.scala")
+		val invalidFile = Paths.get(s"$resPath/@@@@.scala")
+		val notScalaFile = Paths.get(s"$resPath/notScalaFile.java")
+
+		SourceCodeFile.createFromFile(invalidFile) match{
+			case Failure(why: FileNotFoundException) => assert(why.toString.contains(invalidFile.toString))
+			case _ => fail()
+		}
+
+		SourceCodeFile.createFromFile(notScalaFile) match{
+			case Failure(why: NotScalaFile) => assert(why.toString.contains(notScalaFile.toString))
+			case _ => fail()
+		}
+
+		SourceCodeFile.createFromFile(scalaFile) match{
+			case Success(content) => assert(content.file == scalaFile)
+			case _ => fail()
+		}
+	}
+
+	"SoftwareModule factory" should "create instance from folder" in {
+		val folder = Paths.get(s"$resPath/module")
+		val invalidFolder = Paths.get(s"$resPath/not/exists/for/sure")
+		val notAFolder = Paths.get(s"$resPath/1.scala")
+
+		val scf1 = SourceCodeFile.createFromFile(Paths.get(s"$resPath/module/src/main/scala/io/pack/1.scala")).asInstanceOf[Success[SourceCodeFile]].content
+		val scf2 = SourceCodeFile.createFromFile(Paths.get(s"$resPath/module/src/main/scala/io/pack/age/2.scala")).asInstanceOf[Success[SourceCodeFile]].content
+
+		SoftwareModule.createFromFolder(invalidFolder) match {
+			case Failure(why: FileNotFoundException) => assert(why.toString.contains(invalidFolder.toString))
+			case _ => fail()
+		}
+
+		SoftwareModule.createFromFolder(notAFolder) match {
+			case Failure(why: Exception) => assert(why.toString.contains(notAFolder.toString))
+			case _ => fail()
+		}
+
+		SoftwareModule.createFromFolder(folder) match {
+			case Success(content) =>
+				assert(content.sources.size == 2)
+				assert(content.sources.contains(scf1) && content.sources.contains(scf2))
+			case _ => fail()
+		}
+	}
+
+	/*
 
 	"AIRElationController" should "add a file" in {
 		val interactor = new AIRelationInteractor(presenter, gateway)
@@ -90,4 +140,5 @@ class AIRelationControllerTest extends FlatSpec{
 		assert(ctrl.snapshot.contains("view"))
 		println(ctrl.snapshot)
 	}
+	*/
 }

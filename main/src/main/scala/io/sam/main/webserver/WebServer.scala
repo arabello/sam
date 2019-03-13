@@ -8,7 +8,8 @@ import akka.http.scaladsl.model.{ContentTypes, HttpEntity}
 import akka.http.scaladsl.server.Directives._
 import akka.stream.ActorMaterializer
 import io.sam.controllers.result.{Failure, Logs, Success}
-import io.sam.controllers.{AIRelationController, Config}
+import io.sam.controllers.Config
+import io.sam.controllers.airelation.AIRelationController
 import io.sam.domain.airelation.{AIRelationInteractor, DataGateway}
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.AIRelationJSONView

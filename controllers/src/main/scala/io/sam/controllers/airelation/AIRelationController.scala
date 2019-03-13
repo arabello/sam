@@ -1,13 +1,26 @@
-package io.sam.controllers
+package io.sam.controllers.airelation
 
-import java.io.File
-
-import io.sam.controllers.result._
+import io.sam.controllers.{AbstractController, Config}
 import io.sam.domain.airelation.{InputBoundary, InputData}
 
 import scala.io.Source
 
-class AIRelationController(inputBoundary: InputBoundary, config: Config) {
+class AIRelationController(inputBoundary: InputBoundary, config: Config) extends AbstractController[List[SoftwareModule]] {
+	override def baseState(): List[SoftwareModule] = List()
+
+	override def submit(): Unit = inputBoundary.measure(
+		InputData(
+			popState().map( module =>
+				(module.name, module.sources.map( src =>
+					(src.name, Source.fromFile(src.file.toFile).asInstanceOf[Source]) ) ) ).toMap
+		)
+	)
+
+	def add(module: SoftwareModule): Unit = {
+		pushState(popState() :+ module)
+	}
+
+	/*
 	private val extensionRegExp = """.*\.(\w+)""".r
 
 	private var data: Map[String, Set[(String, File)]] = Map()
@@ -88,4 +101,5 @@ class AIRelationController(inputBoundary: InputBoundary, config: Config) {
 
 		inputBoundary.measure(InputData(inputData))
 	}
+	*/
 }
