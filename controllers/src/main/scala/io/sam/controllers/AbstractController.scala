@@ -1,14 +1,16 @@
 package io.sam.controllers
 
 abstract class AbstractController[T]{
-	val snapshot: T = popState()
+	def snapshot: T = stateHistory.head
 
 	private var stateHistory: List[T] = List(baseState())
 
 	protected def pushState(state: T): Unit = stateHistory = state :: stateHistory
 
 	protected def popState(): T = try{
-		stateHistory.head
+		val head = stateHistory.head
+		stateHistory = stateHistory.tail
+		head
 	} catch {
 		case _: Throwable =>
 			stateHistory = List(baseState())

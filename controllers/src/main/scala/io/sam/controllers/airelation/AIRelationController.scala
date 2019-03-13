@@ -1,105 +1,87 @@
 package io.sam.controllers.airelation
 
-import io.sam.controllers.{AbstractController, Config}
+import java.io.FileNotFoundException
+import java.nio.file.Path
+
+import io.sam.controllers._
 import io.sam.domain.airelation.{InputBoundary, InputData}
 
 import scala.io.Source
 
-class AIRelationController(inputBoundary: InputBoundary, config: Config) extends AbstractController[List[SoftwareModule]] {
+class AIRelationController(inputBoundary: InputBoundary) extends AbstractController[List[SoftwareModule]] {
 	override def baseState(): List[SoftwareModule] = List()
 
 	override def submit(): Unit = inputBoundary.measure(
 		InputData(
-			popState().map( module =>
+			snapshot.map( module =>
 				(module.name, module.sources.map( src =>
 					(src.name, Source.fromFile(src.file.toFile).asInstanceOf[Source]) ) ) ).toMap
 		)
 	)
 
 	def add(module: SoftwareModule): Unit = {
-		pushState(popState() :+ module)
+		pushState(snapshot :+ module)
 	}
 
-	/*
+	def undo(): Unit = popState()
+}
+
+object AIRelationController{
+	private val acceptedFileExt = "scala"
 	private val extensionRegExp = """.*\.(\w+)""".r
 
-	private var data: Map[String, Set[(String, File)]] = Map()
+	def createFromFolder(path: Path): Result[SoftwareModule] ={
+		val p = path.toFile
 
-	def snapshot: Map[String, Set[(String, File)]] = data
+		if (!p.exists())
+			return Failure(new FileNotFoundException(s"$p does not exists"))
 
-	def addProject(path: String): Logs[File] = {
-		val dir = new File(path)
-		if(!dir.isDirectory)
-			return Logs(Seq(Failure(dir, s"${dir.getPath} is not a directory")))
+		if (!p.isDirectory)
+			return Failure(new Exception(s"$p is not a directory"))
 
-		dir.listFiles()
-			.filter(dir => dir.isDirectory)
-    		.filterNot(config.excludeModule)
-			.map( dir => addFilesRecursively(dir.getName, s"${dir.getPath}/${config.relativeMainSrcPath}") )
-			.foldLeft[Logs[File]](Logs(Seq())) {
-				(acc, curr) => acc.copy(logs = acc.logs ++ curr.logs)
+		val sm = allFromFolder(path)
+			.foldLeft[SoftwareModule](SoftwareModule(path.toString, Set())){ (acc, scf) => scf match {
+				case Success(content) => acc.copy(acc.name, acc.sources + content)
+				case _ => acc
 			}
-	}
-
-	private def walkTree(file: File): Iterable[File] = {
-		val children = new Iterable[File] {
-			def iterator = if (file.isDirectory) file.listFiles.iterator else Iterator.empty
 		}
-		Seq(file) ++: children.flatMap(walkTree)
+
+		Success(sm)
 	}
 
-	def addFilesRecursively(path: String): Logs[File] = addFilesRecursively(path, path)
+	def createFromFile(file: Path): Result[SourceCodeFile] = {
+		val f = file.toFile
+		val name = file.toString
 
-	def addFilesRecursively(moduleName: String, path: String): Logs[File] = {
-		val start = new File(path)
-		if(!start.isDirectory)
-			return Logs(Seq(Failure(start, s"${start.getPath} is not a directory")))
+		if (!f.exists())
+			return Failure(new FileNotFoundException(s"$file does not exists"))
 
-		walkTree(start)
-    		.filter(file => file.isFile)
-			.map(file => addFile(moduleName, file))
-			.foldLeft[Logs[File]](Logs(Seq())) {
-				(acc, curr) => acc.copy(logs = acc.logs :+ curr)
-			}
-	}
+		if (!f.isFile)
+			return Failure(new Exception(s"$file is not a file"))
 
-	def addFile(moduleName: String, file: File): Result[File] = {
-		if (!file.exists())
-			return Failure(file, s"$file does not exists")
 
-		if (!file.isFile)
-			return Failure(file, s"$file is not a file")
-
-		if (config.excludeFile.apply(file))
-			return Failure(file, s"$file excluded by configuration clause ${config.excludeFile}")
-
-		file.getName match{
+		f.getName match {
 			case extensionRegExp(ext) =>
-				if (config.acceptFileExtension.nonEmpty && !config.acceptFileExtension.contains(ext))
-					return Failure(file, s"$ext extension is not accepted")
-
-				if (!data.contains(moduleName))
-					data = data + (moduleName -> Set())
-
-				data = data.map(row =>
-					if (row._1 == moduleName)
-						(row._1, row._2 + (file.getPath -> file))
-					else
-						(row._1, row._2)
-				)
-
-				Success(file)
-			case _ => Failure(file, s"$file extension not recognized")
+				if (ext != acceptedFileExt)
+					Failure(new NotScalaFile(file))
+				else
+					Success(SourceCodeFile(name, file))
+			case _ =>
+				Failure(new Exception("cannot resolve file extension pattern matching"))
 		}
 	}
 
-	def submit(): Unit = {
-		val fileToSource = (from: Set[(String, File)]) =>
-			from.map(tuple => tuple._1 -> Source.fromFile(tuple._2).asInstanceOf[Source])
+	def allFromFolder(path: Path): List[Result[SourceCodeFile]] ={
+		val p = path.toFile
 
-		val inputData = data.map(row => (row._1, fileToSource(row._2)))
+		if (!p.exists())
+			return List(Failure(new FileNotFoundException(s"$p does not exists")))
 
-		inputBoundary.measure(InputData(inputData))
+		if (!p.isDirectory)
+			return List(Failure(new Exception(s"$p is not a directory")))
+
+		FSUtility.walkTree(p).foldLeft[List[Result[SourceCodeFile]]](List()) { (results, file) =>
+			results :+ createFromFile(file.toPath)
+		}
 	}
-	*/
 }
