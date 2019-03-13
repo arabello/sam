@@ -1,35 +1,33 @@
 package io.sam.view.test
 
-import java.io.{File, PrintWriter}
+import java.nio.file.Paths
 
 import io.sam.domain.airelation.MeasuredModule
 import io.sam.presenters.airelation.{AIRelationViewModel, PlottedModule}
-import io.sam.view.airelation.AIRelationJSONView
+import io.sam.view.airelation.web.ChartJSView
 import org.scalatest.FlatSpec
 
 import scala.io.Source
 
 class AIRelationWebViewTest extends FlatSpec{
 
-	val jsonFile = new File("view/src/test/resources/airelation.json")
+	private val htmlFile = Paths.get("view/src/test/resources/out.html")
 
-	"JSONView" should "create json file" in{
-		jsonFile.delete()
-		val callbackView: String => Unit  = { json =>
-			val pw = new PrintWriter(jsonFile)
-			pw.write(json)
-			pw.close()
-		}
-		val view = new AIRelationJSONView(callbackView)
-		var points = Set[PlottedModule]()
-		(1 to 5).foreach{ i =>
-			points += PlottedModule(MeasuredModule(s"m$i", math.random().toFloat, math.random().toFloat, math.random().toFloat))
-		}
+	"AIRelationWebView" should "create HTML file" in{
+		htmlFile.toFile.delete()
+		htmlFile.toFile.getParentFile.delete()
+
+		val view = new ChartJSView(htmlFile)
+		val points = for(i <- 1 to 5) yield {
+				val mod = MeasuredModule(s"m$i", math.random().toFloat, math.random().toFloat, math.random().toFloat)
+				PlottedModule(mod.name, mod.instability, mod.abstractness)
+			}
+
 		val id = math.ceil(math.random() * 100)
-		val viewModel = AIRelationViewModel(s"AI Relation Plot {$id}", "Abstractness", "Instability", points)
+		val viewModel = AIRelationViewModel(s"AI Relation Plot {$id}", "Abstractness", "Instability", points.toSet)
 		view.receiveUpdate(viewModel)
 
-		assert(jsonFile.exists())
-		assert(Source.fromFile(jsonFile).mkString.contains(s"{$id}"))
+		assert(htmlFile.toFile.exists())
+		assert(Source.fromFile(htmlFile.toUri).mkString.contains(s"{$id}"))
 	}
 }
