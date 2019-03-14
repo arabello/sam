@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <script
+                src="https://code.jquery.com/jquery-3.3.1.min.js"
+                integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+                crossorigin="anonymous"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.3/Chart.min.js"></script>
+        <link rel="stylesheet"
+              href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+              integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+
+        <link href="https://fonts.googleapis.com/css?family=Major+Mono+Display" rel="stylesheet">
+        <link href="main.css" rel="stylesheet">
+        <meta charset="UTF-8">
+        <title>S.A.M.</title>
+        <style>
+            body{
+                background-color: #ecf0f1;
+            }
+
+            .sam-title{
+                text-align: center;
+            }
+
+            .sam-title h1{
+                font-family: 'Major Mono Display', monospace;
+                font-size: 4em;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid">
+
+            <div class="container sam-title mb-3 mt-2">
+                <div class="row">
+                    <h1 class="col-12">sAM</h1>
+                    <h6 id="graph-title" class="col-12"></h6>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-4 m-auto chart-container">
+                    <canvas id="chart"></canvas>
+                </div>
+            </div>
+        </div>
+    </body>
+
+    <script>
+        $(function() {
+            var ctx = document.getElementById("chart").getContext('2d');
+
+            var jsonData = JSON.parse('<{[jsonData]}>');
+
+            createChart(jsonData);
+
+            function createChart(jsonData){
+                var chart = new Chart(ctx, {
+                    type: 'bubble',
+                    data: {
+                        datasets: jsonData.datasets
+                    },
+                    options: {
+                        aspectRatio: 1,
+                        legend:{
+                            position: 'bottom'
+                        },
+                        scales: {
+                            xAxes: [{
+                                scaleLabel:{
+                                    display: true,
+                                    labelString: "Instability"
+                                },
+                                ticks: {
+                                    beginAtZero:true,
+                                    min: 0,
+                                    max: 1
+                                }
+                            }],
+                            yAxes: [{
+                                scaleLabel:{
+                                    display: true,
+                                    labelString: "Abstractness"
+                                },
+                                ticks: {
+                                    beginAtZero:true,
+                                    min: 0,
+                                    max: 1
+                                }
+                            }]
+                        },
+                        tooltips: {
+                            callbacks: {
+                                label: function(tooltipItem, data) {
+                                    var label = data.datasets[tooltipItem.datasetIndex].label;
+
+                                    if (tooltipItem.datasetIndex > data.datasets.length - 4){ // Label exceptions (zones and main sequence)
+                                        return label
+                                    }
+
+
+                                    label += ': (I = ';
+                                    label += Math.round(tooltipItem.xLabel * 100) / 100;
+                                    label += ', A = ';
+                                    label += Math.round(tooltipItem.yLabel * 100) / 100;
+                                    label += ') ';
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                });
+
+                chart.generateLegend();
+            }
+        });
+    </script>
+</html>

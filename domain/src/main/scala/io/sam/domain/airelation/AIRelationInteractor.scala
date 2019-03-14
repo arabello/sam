@@ -2,7 +2,7 @@ package io.sam.domain.airelation
 
 import io.sam.core.{Analyzer, Code, CodeFactory, Component}
 
-class AIRelationInteractor(out: OutputBoundary, gateway: DataGateway) extends InputBoundary with CodeFactory {
+class AIRelationInteractor(out: OutputBoundary) extends InputBoundary with CodeFactory {
 
 	override def measure(data: InputData): Unit = {
 		var submittedModules = Set[Component]()

@@ -1,4 +1,4 @@
-package io.sam.view.airelation
+package io.sam.view.airelation.web
 
 case class Chart(title: String,
                 xAxisLabel: String,

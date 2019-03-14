@@ -1,4 +1,4 @@
-package io.sam.view.airelation
+package io.sam.view.airelation.web
 
 case class RGBAColor(r: Int, g: Int, b: Int, a: Float){
 	override def toString: String = s"rgba($r, $g, $b, $a)"
