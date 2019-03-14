@@ -9,7 +9,6 @@ import io.sam.domain.airelation._
 import org.scalatest.FlatSpec
 
 class AIRelationTest extends FlatSpec{
-	object gateway extends DataGateway{}
 	object presenter extends OutputBoundary{
 		override def deliver(outputData: OutputData): Unit = {}
 	}
@@ -23,18 +22,19 @@ class AIRelationTest extends FlatSpec{
 		val scalaFile = Paths.get(s"$resPath/1.scala")
 		val invalidFile = Paths.get(s"$resPath/@@@@.scala")
 		val notScalaFile = Paths.get(s"$resPath/notScalaFile.java")
+		val ctrl = new AIRelationController(domainBoundary)
 
-		AIRelationController.createFromFile(invalidFile) match{
+		ctrl.createFromFile(invalidFile) match{
 			case Failure(why: FileNotFoundException) => assert(why.toString.contains(invalidFile.toString))
 			case _ => fail()
 		}
 
-		AIRelationController.createFromFile(notScalaFile) match{
+		ctrl.createFromFile(notScalaFile) match{
 			case Failure(why: NotScalaFile) => assert(why.toString.contains(notScalaFile.toString))
 			case _ => fail()
 		}
 
-		AIRelationController.createFromFile(scalaFile) match{
+		ctrl.createFromFile(scalaFile) match{
 			case Success(content) => assert(content.file == scalaFile)
 			case _ => fail()
 		}
@@ -44,21 +44,22 @@ class AIRelationTest extends FlatSpec{
 		val folder = Paths.get(s"$resPath/module")
 		val invalidFolder = Paths.get(s"$resPath/not/exists/for/sure")
 		val notAFolder = Paths.get(s"$resPath/1.scala")
+		val ctrl = new AIRelationController(domainBoundary)
 
-		val scf1 = AIRelationController.createFromFile(Paths.get(s"$resPath/module/src/main/scala/io/pack/1.scala")).asInstanceOf[Success[SourceCodeFile]].content
-		val scf2 = AIRelationController.createFromFile(Paths.get(s"$resPath/module/src/main/scala/io/pack/age/2.scala")).asInstanceOf[Success[SourceCodeFile]].content
+		val scf1 = ctrl.createFromFile(Paths.get(s"$resPath/module/src/main/scala/io/pack/1.scala")).asInstanceOf[Success[SourceCodeFile]].content
+		val scf2 = ctrl.createFromFile(Paths.get(s"$resPath/module/src/main/scala/io/pack/age/2.scala")).asInstanceOf[Success[SourceCodeFile]].content
 
-		AIRelationController.createFromFolder(invalidFolder) match {
+		ctrl.createFromFolder(invalidFolder) match {
 			case Failure(why: FileNotFoundException) => assert(why.toString.contains(invalidFolder.toString))
 			case _ => fail()
 		}
 
-		AIRelationController.createFromFolder(notAFolder) match {
+		ctrl.createFromFolder(notAFolder) match {
 			case Failure(why: Exception) => assert(why.toString.contains(notAFolder.toString))
 			case _ => fail()
 		}
 
-		AIRelationController.createFromFolder(folder) match {
+		ctrl.createFromFolder(folder) match {
 			case Success(content) =>
 				assert(content.sources.size == 2)
 				assert(content.sources.contains(scf1) && content.sources.contains(scf2))
@@ -72,7 +73,7 @@ class AIRelationTest extends FlatSpec{
 
 		assert(ctrl.snapshot.isEmpty)
 
-		AIRelationController.createFromFolder(folder) match {
+		ctrl.createFromFolder(folder) match {
 			case Success(content) => ctrl.add(content)
 			case _ => fail()
 		}

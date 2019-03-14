@@ -9,6 +9,9 @@ import io.sam.domain.airelation.{InputBoundary, InputData}
 import scala.io.Source
 
 class AIRelationController(inputBoundary: InputBoundary) extends AbstractController[List[SoftwareModule]] {
+	private val acceptedFileExt = "scala"
+	private val extensionRegExp = """.*\.(\w+)""".r
+
 	override def baseState(): List[SoftwareModule] = List()
 
 	override def submit(): Unit = inputBoundary.measure(
@@ -24,11 +27,6 @@ class AIRelationController(inputBoundary: InputBoundary) extends AbstractControl
 	}
 
 	def undo(): Unit = popState()
-}
-
-object AIRelationController{
-	private val acceptedFileExt = "scala"
-	private val extensionRegExp = """.*\.(\w+)""".r
 
 	def createFromFolder(path: Path): Result[SoftwareModule] ={
 		val p = path.toFile
@@ -41,9 +39,9 @@ object AIRelationController{
 
 		val sm = allFromFolder(path)
 			.foldLeft[SoftwareModule](SoftwareModule(path.toString, Set())){ (acc, scf) => scf match {
-				case Success(content) => acc.copy(acc.name, acc.sources + content)
-				case _ => acc
-			}
+			case Success(content) => acc.copy(acc.name, acc.sources + content)
+			case _ => acc
+		}
 		}
 
 		Success(sm)

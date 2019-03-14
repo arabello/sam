@@ -9,7 +9,6 @@ import scala.io.Source
 
 class AIRelationTest extends FlatSpec{
 	val resPath = "domain/src/test/resources"
-	object gateway extends DataGateway{}
 
 	val abstractness: Map[String, Double] = Map(
 		"Ca" -> 0.0,
@@ -45,7 +44,7 @@ class AIRelationTest extends FlatSpec{
 				assert(true)
 			}
 		}
-		new AIRelationInteractor(presenter, gateway).measure(inputData)
+		new AIRelationInteractor(presenter).measure(inputData)
 	}
 
 	it should "calculate abstractness, instability and distance" in{
@@ -66,7 +65,7 @@ class AIRelationTest extends FlatSpec{
 			}
 		}
 
-		new AIRelationInteractor(presenter, gateway).measure(inputData)
+		new AIRelationInteractor(presenter).measure(inputData)
 	}
 
 }

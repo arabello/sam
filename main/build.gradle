@@ -1,5 +1,3 @@
-version '0.0.1'
-
 dependencies{
     implementation project(':core')
     implementation project(':domain')
@@ -7,9 +5,5 @@ dependencies{
     implementation project(':view')
     implementation project(':controllers')
 
-    task copyTestResources(type: Copy) {
-        from "src/test/resources"
-        into "out/test/resources"
-    }
-    processTestResources.dependsOn copyTestResources
+    implementation 'com.github.scopt:scopt_2.12:3.7.1'
 }
