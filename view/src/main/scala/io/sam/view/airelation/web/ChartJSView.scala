@@ -29,7 +29,7 @@ class ChartJSView(output: Path) extends AIRelationScreenView{
 		(JsPath \ "datasets").write[Seq[Dataset]]
 	)(unlift(Chart.unapply))
 
-	private val templateFile = Paths.get("view/src/main/resources/airelation/web/index.html.txt")
+	private val templateFile = Paths.get("resources/airelation/web/index.html.txt")
 	private val placeholderKey = "<{[jsonData]}>"
 
 	private val pointRadius = 12 // px
@@ -41,7 +41,12 @@ class ChartJSView(output: Path) extends AIRelationScreenView{
 	private val zpl = AIRelationViewModel.zoneOfPainLine
 	private val zul = AIRelationViewModel.zoneOfUselessnessLine
 
+	private var errors = Set[String]()
+	def getErrors: Set[String] = errors
+
 	override def receiveUpdate(viewModel: AIRelationViewModel): Unit = {
+
+		errors = viewModel.errors.map(m => s"Error on '${m.name}': ${m.why}. Module excluded and not plotted.")
 
 		val points = (for(point <- viewModel.points) yield Dataset(point.label, Seq(Point(point.x, point.y, pointRadius)), RGBAColor.randomWithAlpha(0.2f).toString)).toSeq
 

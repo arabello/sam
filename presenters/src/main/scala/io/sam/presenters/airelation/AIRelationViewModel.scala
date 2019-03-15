@@ -2,7 +2,7 @@ package io.sam.presenters.airelation
 
 import scala.collection.immutable.NumericRange
 
-case class AIRelationViewModel(title: String, xAxis: String, yAxis: String, points: Set[PlottedModule])
+case class AIRelationViewModel(title: String, xAxis: String, yAxis: String, points: Set[PlottedModule], errors: Set[InvalidModule])
 
 object AIRelationViewModel{
 	def domain: Range.Partial[BigDecimal, NumericRange.Inclusive[BigDecimal]] = BigDecimal("0") to BigDecimal("1")

@@ -9,3 +9,10 @@ dependencies{
     }
     processTestResources.dependsOn copyTestResources
 }
+
+processResources{
+    copy{
+        from "src/main/resources"
+        into "../main/src/dist/resources"
+    }
+}
