@@ -64,12 +64,15 @@ object MainCLI {
 
 						var in = "Y"
 						while(in == "Y" || in == "y" || in.isEmpty){
-							println("Insert module path")
+							print("Insert module path: ")
 							val path = Paths.get(StdIn.readLine())
+
+							print("Insert module name: ")
+							val moduleName = StdIn.readLine()
 
 							controller.createFromFolder(path) match {
 								case Failure(why) => println(s"Error: $why")
-								case Success(content) => controller.add(content)
+								case Success(content) => controller.add(content.copy(name = moduleName))
 							}
 
 							println("\nCurrent loaded modules:")
