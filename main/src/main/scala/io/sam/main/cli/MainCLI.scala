@@ -83,6 +83,12 @@ object MainCLI {
 						}
 
 						controller.submit()
+
+						println()
+						for (e <- view.getErrors)
+							System.err.println(e)
+
+						println()
 						println(s"airelation graph printed out to $outpath")
 					case _ => println("unspecified command")
 				}
