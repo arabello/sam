@@ -1,3 +1,5 @@
+apply plugin: 'application'
+
 dependencies{
     implementation project(':core')
     implementation project(':domain')
@@ -6,4 +8,27 @@ dependencies{
     implementation project(':controllers')
 
     implementation 'com.github.scopt:scopt_2.12:3.7.1'
+}
+
+task createProperties(dependsOn: processResources) {
+    doLast {
+        new File("version.properties").withWriter { w ->
+            Properties p = new Properties()
+            p['version'] = project.version.toString()
+            p.store w, null
+        }
+    }
+}
+
+classes{
+    dependsOn createProperties
+}
+
+application {
+    applicationName = "sam"
+    mainClassName = 'io.sam.main.cli.MainCLI'
+
+    applicationDistribution.from("."){
+        include "version.properties"
+    }
 }

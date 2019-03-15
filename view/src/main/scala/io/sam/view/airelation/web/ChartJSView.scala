@@ -29,7 +29,7 @@ class ChartJSView(output: Path) extends AIRelationScreenView{
 		(JsPath \ "datasets").write[Seq[Dataset]]
 	)(unlift(Chart.unapply))
 
-	private val templateFile = Paths.get("view/src/main/resources/airelation/web/index.html.txt")
+	private val templateFile = Paths.get("resources/airelation/web/index.html.txt")
 	private val placeholderKey = "<{[jsonData]}>"
 
 	private val pointRadius = 12 // px

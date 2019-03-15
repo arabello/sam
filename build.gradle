@@ -11,25 +11,4 @@ subprojects {
     }
 
     version = '0.0.1'
-
-    tasks.withType(ScalaCompile) {
-        scalaCompileOptions.forkOptions.with {
-            memoryMaximumSize = '1g'
-            jvmArgs = ['-XX:MaxPermSize=512m']
-        }
-    }
-
-    task createProperties(dependsOn: processResources) {
-        doLast {
-            new File("version.properties").withWriter { w ->
-                Properties p = new Properties()
-                p['version'] = project.version.toString()
-                p.store w, null
-            }
-        }
-    }
-
-    classes {
-        dependsOn createProperties
-    }
 }

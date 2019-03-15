@@ -71,7 +71,7 @@ object MainCLI {
 							val moduleName = StdIn.readLine()
 
 							controller.createFromFolder(path) match {
-								case Failure(why) => println(s"Error: $why")
+								case Failure(why) => System.err.println(s"Error: $why")
 								case Success(content) => controller.add(content.copy(name = moduleName))
 							}
 
