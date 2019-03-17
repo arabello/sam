@@ -36,21 +36,23 @@ object MainCLI {
 			head("sam", readVersion())
 
 			opt[File]('o', "out")
-				.required()
 				.valueName("<path>")
 				.action((x, c) => c.copy(out = x))
-				.text("Required. Output path.")
+				.text("Specify the output path. Default is 'out'")
 
 			cmd("airelation")
 				.action( (_, c) => c.copy(mode = "airelation") )
-				.text("Print out the Abstractness/Instability relation")
+				.text("Print out the Abstractness/Instability relation graph")
 				.children(
 					opt[String]("fName")
 						.abbr("fn")
     					.withFallback(() => "airelation")
 						.action( (x, c) => c.copy(fileName = s"$x.html") )
-						.text("Output file name")
+						.text("Specify the output file name. Default is 'airelation.html'")
 				)
+
+			help("help")
+    			.abbr("h")
 		}
 		optionParser.parse(args, Config()) match {
 			case Some(config) =>
@@ -90,11 +92,11 @@ object MainCLI {
 
 						println()
 						println(s"airelation graph printed out to $outpath")
-					case _ => println("unspecified command")
+
+					case _ => optionParser.showTryHelp()
 				}
 
-			case None => // arguments are bad, error message will have been displayed
-				optionParser.help("help")
+			case None => optionParser.help("help")
 		}
 
 	}
