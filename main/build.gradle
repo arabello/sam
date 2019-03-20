@@ -30,5 +30,6 @@ application {
 
     applicationDistribution.from("."){
         include "version.properties"
+        include "config.properties"
     }
 }

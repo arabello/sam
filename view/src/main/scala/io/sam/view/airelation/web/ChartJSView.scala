@@ -9,7 +9,7 @@ import play.api.libs.json._
 
 import scala.io.Source
 
-class ChartJSView(output: Path) extends AIRelationScreenView{
+class ChartJSView(output: Path, val templateFile: Path) extends AIRelationScreenView{
 	implicit val pointWrites: Writes[Point] = (
 		(JsPath \ "x").write[Float] and
 		(JsPath \ "y").write[Float] and
@@ -29,7 +29,6 @@ class ChartJSView(output: Path) extends AIRelationScreenView{
 		(JsPath \ "datasets").write[Seq[Dataset]]
 	)(unlift(Chart.unapply))
 
-	private val templateFile = Paths.get("resources/airelation/web/index.html.txt")
 	private val placeholderKey = "<{[jsonData]}>"
 
 	private val pointRadius = 12 // px

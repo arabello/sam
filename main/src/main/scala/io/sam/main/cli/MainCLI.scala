@@ -7,6 +7,7 @@ import java.util.Properties
 import io.sam.controllers.airelation.AIRelationController
 import io.sam.controllers.{Failure, Success}
 import io.sam.domain.airelation.AIRelationInteractor
+import io.sam.main.{DistConfig, manage}
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.web.ChartJSView
 import scopt.OptionParser
@@ -15,20 +16,10 @@ import scala.io.StdIn
 
 object MainCLI {
 
-	private def readVersion(): String = {
+	private def readVersion(): String = manage(new FileInputStream(new File("version.properties"))){ resource =>
 		val props = new Properties()
-		var fis: FileInputStream = null
-		var version = ""
-
-		try {
-			fis = new FileInputStream(new File("version.properties"))
-			props.load(fis)
-			version = props.getProperty("version")
-		}finally{
-			if (fis != null)
-				fis.close()
-		}
-		version
+		props.load(resource)
+		props.getProperty("version")
 	}
 
 	def main(args: Array[String]): Unit = {
@@ -54,12 +45,21 @@ object MainCLI {
 			help("help")
     			.abbr("h")
 		}
+
+		val distConfig = DistConfig.fromProperties(
+			manage(new FileInputStream(new File("config.properties"))){ res =>
+				val props = new Properties()
+				props.load(res)
+				props
+			}
+		)
+
 		optionParser.parse(args, Config()) match {
 			case Some(config) =>
 				config.mode match {
 					case "airelation" =>
 						val outpath = s"${config.out}${File.separator}${config.fileName}"
-						val view = new ChartJSView(Paths.get(outpath))
+						val view = new ChartJSView(Paths.get(outpath), Paths.get(distConfig.airelationTemplateFile))
 						val presenter = new AIRelationScreenPresenter(view)
 						val interactor = new AIRelationInteractor(presenter)
 						val controller = new AIRelationController(interactor)
