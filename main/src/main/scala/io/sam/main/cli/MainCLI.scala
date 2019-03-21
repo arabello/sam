@@ -7,7 +7,7 @@ import java.util.Properties
 import io.sam.controllers.airelation.AIRelationController
 import io.sam.controllers.{Failure, Success}
 import io.sam.domain.airelation.AIRelationInteractor
-import io.sam.main.{DistConfig, manage}
+import io.sam.main.{Config, manage}
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.web.ChartJSView
 import scopt.OptionParser
@@ -16,15 +16,17 @@ import scala.io.StdIn
 
 object MainCLI {
 
-	private def readVersion(): String = manage(new FileInputStream(new File("version.properties"))){ resource =>
-		val props = new Properties()
-		props.load(resource)
-		props.getProperty("version")
-	}
-
 	def main(args: Array[String]): Unit = {
-		val optionParser: OptionParser[Config] = new scopt.OptionParser[Config]("SAM") {
-			head("sam", readVersion())
+		val CONFIG = Config.fromProperties(
+			manage(new FileInputStream(new File("dist.properties"))){ res =>
+				val props = new Properties()
+				props.load(res)
+				props
+			}
+		)
+
+		val optionParser: OptionParser[ConfigCLI] = new scopt.OptionParser[ConfigCLI]("SAM") {
+			head("sam", CONFIG.version)
 
 			opt[File]('o', "out")
 				.valueName("<path>")
@@ -46,20 +48,12 @@ object MainCLI {
     			.abbr("h")
 		}
 
-		val distConfig = DistConfig.fromProperties(
-			manage(new FileInputStream(new File("config.properties"))){ res =>
-				val props = new Properties()
-				props.load(res)
-				props
-			}
-		)
-
-		optionParser.parse(args, Config()) match {
-			case Some(config) =>
-				config.mode match {
+		optionParser.parse(args, ConfigCLI()) match {
+			case Some(cliConfig) =>
+				cliConfig.mode match {
 					case "airelation" =>
-						val outpath = s"${config.out}${File.separator}${config.fileName}"
-						val view = new ChartJSView(Paths.get(outpath), Paths.get(distConfig.airelationTemplateFile))
+						val outpath = s"${cliConfig.out}${File.separator}${cliConfig.fileName}"
+						val view = new ChartJSView(Paths.get(outpath), Paths.get(CONFIG.airelationTemplateFile))
 						val presenter = new AIRelationScreenPresenter(view)
 						val interactor = new AIRelationInteractor(presenter)
 						val controller = new AIRelationController(interactor)

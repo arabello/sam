@@ -4,16 +4,15 @@ import java.io.{File, FileInputStream}
 import java.nio.file.Path
 import java.util.Properties
 
-case class DistConfig(
-	airelationTemplateFile: String
-)
+case class Config(version: String, airelationTemplateFile: String)
 
-object DistConfig{
-	def fromProperties(props: Properties): DistConfig = DistConfig(
+object Config{
+	def fromProperties(props: Properties): Config = Config(
+		version = props.getProperty("version"),
 		airelationTemplateFile = props.getProperty("airelationTemplateFile")
 	)
 
-	def fromPropertiesFile(file: Path): DistConfig = fromProperties(
+	def fromPropertiesFile(file: Path): Config = fromProperties(
 		manage(new FileInputStream(new File(file.toUri))){ res =>
 			val props = new Properties()
 			props.load(res)

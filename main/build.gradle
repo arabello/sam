@@ -10,22 +10,38 @@ dependencies{
     implementation 'com.github.scopt:scopt_2.12:3.7.1'
 }
 
-task createProperties(dependsOn: processResources) {
+task updateDevProperties(dependsOn: processResources) {
     doLast {
-        new File("version.properties").withWriter { w ->
-            Properties p = new Properties()
-            p['version'] = project.version.toString()
-            p.store w, null
-        }
+        def props = new Properties()
+        def propsFile = file("${project(':main').projectDir}/dev.properties")
+
+        props.load(propsFile.newDataInputStream())
+        props.setProperty("version", project.version)
+        props.store(propsFile.newWriter(), null)
     }
 }
 
-application {
+task createDistProperties {
+    doLast {
+        def props = new Properties()
+        def devProps = file("${project(':main').projectDir}/dev.properties")
+        def distProps = file("${project(':main').projectDir}/dist.properties")
+
+        props.load(devProps.newDataInputStream())
+        props.setProperty("airelationTemplateFile", "resources/airelation/web/index.html.txt")
+        props.setProperty("version", project.version)
+        props.store(distProps.newWriter(), null)
+    }
+}
+
+distZip.dependsOn createDistProperties
+installDist.dependsOn createDistProperties
+
+application{
     applicationName = "sam"
     mainClassName = 'io.sam.main.cli.MainCLI'
 
     applicationDistribution.from("."){
-            include "version.properties"
             include "dist.properties"
         }
 
@@ -33,6 +49,3 @@ application {
         into "resources"
     }
 }
-
-
-
