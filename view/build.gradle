@@ -9,3 +9,9 @@ dependencies{
     }
     processTestResources.dependsOn copyTestResources
 }
+
+test{
+    dependencies {
+        implementation project(':domain')
+    }
+}

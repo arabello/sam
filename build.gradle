@@ -11,4 +11,13 @@ subprojects {
     }
 
     version = '0.0.1'
+
+    task scalaTest(dependsOn: ['testClasses'], type: JavaExec) {
+        main = 'org.scalatest.tools.Runner'
+        args = ['-R', "${projectDir}/build/classes/scala/test", '-o']
+        classpath = sourceSets.test.runtimeClasspath
+        workingDir = rootDir
+    }
+
+    test.dependsOn scalaTest
 }
