@@ -13,7 +13,7 @@ dependencies{
 task updateDevProperties(dependsOn: processResources) {
     doLast {
         def props = new Properties()
-        def propsFile = file("${project(':main').projectDir}/dev.properties")
+        def propsFile = file("$rootDir/dev.properties")
 
         props.load(propsFile.newDataInputStream())
         props.setProperty("version", project.version)
@@ -24,8 +24,8 @@ task updateDevProperties(dependsOn: processResources) {
 task createDistProperties {
     doLast {
         def props = new Properties()
-        def devProps = file("${project(':main').projectDir}/dev.properties")
-        def distProps = file("${project(':main').projectDir}/dist.properties")
+        def devProps = file("$rootDir/dev.properties")
+        def distProps = file("$rootDir/dist.properties")
 
         props.load(devProps.newDataInputStream())
         props.setProperty("airelationTemplateFile", "resources/airelation/web/index.html.txt")
@@ -41,7 +41,7 @@ application{
     applicationName = "sam"
     mainClassName = 'io.sam.main.cli.MainCLI'
 
-    applicationDistribution.from("."){
+    applicationDistribution.from("$rootDir"){
             include "dist.properties"
         }
 
