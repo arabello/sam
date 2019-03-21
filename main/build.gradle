@@ -20,16 +20,19 @@ task createProperties(dependsOn: processResources) {
     }
 }
 
-classes{
-    dependsOn createProperties
-}
-
 application {
     applicationName = "sam"
     mainClassName = 'io.sam.main.cli.MainCLI'
 
     applicationDistribution.from("."){
-        include "version.properties"
-        include "config.properties"
+            include "version.properties"
+            include "dist.properties"
+        }
+
+    applicationDistribution.from("${project(':view').projectDir}/src/main/resources"){
+        into "resources"
     }
 }
+
+
+

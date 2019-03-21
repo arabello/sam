@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ScalaCompilerConfiguration">
-    <profile name="Gradle 1" modules="sam.controllers.main,sam.controllers.test,sam.core.main,sam.core.test,sam.domain.main,sam.domain.test,sam.main.main,sam.main.test,sam.presenters.main,sam.presenters.test,sam.view.main,sam.view.test">
+    <profile name="Gradle 2" modules="sam.controllers.main,sam.controllers.test,sam.core.main,sam.core.test,sam.domain.main,sam.domain.test,sam.main.main,sam.main.test,sam.presenters.main,sam.presenters.test,sam.view.main,sam.view.test">
       <option name="deprecationWarnings" value="true" />
       <option name="uncheckedWarnings" value="true" />
       <parameters>
