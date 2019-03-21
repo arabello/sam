@@ -4,8 +4,8 @@ dependencies{
     implementation 'com.typesafe.play:play-json_2.12:2.6.10'
 
     task copyTestResources(type: Copy) {
-        from "src/test/resources"
-        into "out/test/resources"
+        from "src/main/resources"
+        into "src/test/resources"
     }
     processTestResources.dependsOn copyTestResources
 }

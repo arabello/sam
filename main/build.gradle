@@ -28,7 +28,7 @@ task createDistProperties {
         def distProps = file("$rootDir/dist.properties")
 
         props.load(devProps.newDataInputStream())
-        props.setProperty("airelationTemplateFile", "resources/airelation/web/index.html.txt")
+        props.setProperty("airelationTemplateFile", "view/src/main/resources/airelation/web/index.html.txt")
         props.setProperty("version", project.version)
         props.store(distProps.newWriter(), null)
     }

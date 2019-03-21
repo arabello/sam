@@ -7,7 +7,6 @@ import io.sam.controllers.Success
 import io.sam.controllers.airelation.AIRelationController
 import io.sam.domain.airelation.AIRelationInteractor
 import io.sam.main.Config
-import io.sam.main.cli.ConfigCLI
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.web.ChartJSView
 import org.scalatest.FlatSpec
@@ -23,17 +22,16 @@ class MainTest extends FlatSpec{
 	}
 
 	it should "contains airelationTemplateFile property" in {
-		assert(Config.fromPropertiesFile(Paths.get("config.properties")).airelationTemplateFile.nonEmpty)
+		assert(Config.fromPropertiesFile(Paths.get("dist.properties")).airelationTemplateFile.nonEmpty)
 	}
 
 	it should "contains version property" in {
-		assert(Config.fromPropertiesFile(Paths.get("config.properties")).version.nonEmpty)
+		assert(Config.fromPropertiesFile(Paths.get("dist.properties")).version.nonEmpty)
 	}
 
 	"Main" should "provide AIRelation metric" in{
 		val CONFIG = Config.fromPropertiesFile(Paths.get("dist.properties"))
-		val cliConfig = ConfigCLI()
-		val outpath = s"${cliConfig.out}${File.separator}${cliConfig.fileName}"
+		val outpath = "main/src/out/test/airelation.html"
 		val view = new ChartJSView(Paths.get(outpath), Paths.get(CONFIG.airelationTemplateFile))
 		val presenter = new AIRelationScreenPresenter(view)
 		val interactor = new AIRelationInteractor(presenter)
@@ -43,7 +41,10 @@ class MainTest extends FlatSpec{
 
 		for {
 			module <- mockModulesName
-			sm = controller.createFromFolder(Paths.get(s"$module/src/main/scala")) match { case Success(content) => content }
+			sm <- controller.createFromFolder(Paths.get(s"$module/src/main/scala")) match {
+				case Success(content) => Some(content)
+				case _ => None
+			}
 		} controller.add(sm)
 
 		assert(controller.snapshot.size == 6)

@@ -11,20 +11,20 @@ import scala.io.Source
 
 class AIRelationWebViewTest extends FlatSpec{
 
-	private val htmlFile = Paths.get("view/src/test/resources/out.html")
 
 	"AIRelationWebView" should "create HTML file" in{
+		val templateFile = Paths.get("view/src/test/resources/airelation/web/index.html.txt")
+		val htmlFile = Paths.get("view/src/test/resources/out.html")
 		htmlFile.toFile.delete()
-		htmlFile.toFile.getParentFile.delete()
 
-		val view = new ChartJSView(htmlFile)
+		val view = new ChartJSView(htmlFile, templateFile)
 		val points = for(i <- 1 to 5) yield {
 				val mod = MeasuredModule(s"m$i", math.random().toFloat, math.random().toFloat, math.random().toFloat)
 				PlottedModule(mod.name, mod.instability, mod.abstractness)
 			}
 
 		val id = math.ceil(math.random() * 100)
-		val viewModel = AIRelationViewModel(s"AI Relation Plot {$id}", "Abstractness", "Instability", points.toSet)
+		val viewModel = AIRelationViewModel(s"AI Relation Plot {$id}", "Abstractness", "Instability", points.toSet, Set())
 		view.receiveUpdate(viewModel)
 
 		assert(htmlFile.toFile.exists())
