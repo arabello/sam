@@ -5,14 +5,15 @@ import java.nio.file.Paths
 
 import io.sam.controllers.airelation.{AIRelationController, SourceCodeFile}
 import io.sam.controllers.{Failure, NotScalaFile, Success}
+import io.sam.domain.{InputBoundary, OutputBoundary}
 import io.sam.domain.airelation._
 import org.scalatest.FlatSpec
 
 class AIRelationTest extends FlatSpec{
-	object presenter extends OutputBoundary{
+	object presenter extends OutputBoundary[OutputData]{
 		override def deliver(outputData: OutputData): Unit = {}
 	}
-	object domainBoundary extends InputBoundary {
+	object domainBoundary extends InputBoundary[InputData] {
 		override def measure(data: InputData): Unit = {}
 	}
 

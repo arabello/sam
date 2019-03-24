@@ -5,7 +5,7 @@ import java.nio.file.Paths
 
 import io.sam.controllers.Success
 import io.sam.controllers.airelation.AIRelationController
-import io.sam.domain.airelation.AIRelationInteractor
+import io.sam.domain.airelation.AIRelationUseCase
 import io.sam.main.Config
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.web.ChartJSView
@@ -34,7 +34,7 @@ class MainTest extends FlatSpec{
 		val outpath = "main/src/out/test/airelation.html"
 		val view = new ChartJSView(Paths.get(outpath), Paths.get(CONFIG.airelationTemplateFile))
 		val presenter = new AIRelationScreenPresenter(view)
-		val interactor = new AIRelationInteractor(presenter)
+		val interactor = new AIRelationUseCase(presenter)
 		val controller = new AIRelationController(interactor)
 
 		val mockModulesName = List("controllers", "core", "domain", "main", "presenters", "view")

@@ -2,6 +2,7 @@ package io.sam.domain.airelation.test
 
 import java.io.File
 
+import io.sam.domain.OutputBoundary
 import io.sam.domain.airelation._
 import org.scalatest.FlatSpec
 
@@ -39,12 +40,12 @@ class AIRelationTest extends FlatSpec{
 			"Cd" -> Set(("v", Source.fromFile(new File(s"$resPath/v"))))
 		))
 
-		object presenter extends OutputBoundary{
+		object presenter extends OutputBoundary[OutputData]{
 			override def deliver(outputData: OutputData): Unit = {
 				assert(true)
 			}
 		}
-		new AIRelationInteractor(presenter).measure(inputData)
+		new AIRelationUseCase(presenter).measure(inputData)
 	}
 
 	it should "calculate abstractness, instability and distance" in{
@@ -55,7 +56,7 @@ class AIRelationTest extends FlatSpec{
 			"Cd" -> Set(("v", Source.fromFile(new File(s"$resPath/v"))))
 		))
 
-		object presenter extends OutputBoundary{
+		object presenter extends OutputBoundary[OutputData]{
 			override def deliver(outputData: OutputData): Unit = {
 				outputData.modules foreach { mod =>
 					assert(mod.abstractness == abstractness(mod.name))
@@ -65,7 +66,7 @@ class AIRelationTest extends FlatSpec{
 			}
 		}
 
-		new AIRelationInteractor(presenter).measure(inputData)
+		new AIRelationUseCase(presenter).measure(inputData)
 	}
 
 }

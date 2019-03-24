@@ -6,7 +6,7 @@ import java.util.Properties
 
 import io.sam.controllers.airelation.AIRelationController
 import io.sam.controllers.{Failure, Success}
-import io.sam.domain.airelation.AIRelationInteractor
+import io.sam.domain.airelation.AIRelationUseCase
 import io.sam.main.{Config, manage}
 import io.sam.presenters.airelation.AIRelationScreenPresenter
 import io.sam.view.airelation.web.ChartJSView
@@ -55,7 +55,7 @@ object MainCLI {
 						val outpath = s"${cliConfig.out}${File.separator}${cliConfig.fileName}"
 						val view = new ChartJSView(Paths.get(outpath), Paths.get(CONFIG.airelationTemplateFile))
 						val presenter = new AIRelationScreenPresenter(view)
-						val interactor = new AIRelationInteractor(presenter)
+						val interactor = new AIRelationUseCase(presenter)
 						val controller = new AIRelationController(interactor)
 
 						var in = "Y"

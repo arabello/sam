@@ -1,8 +1,9 @@
 package io.sam.presenters.airelation
 
-import io.sam.domain.airelation.{OutputBoundary, OutputData}
+import io.sam.domain.OutputBoundary
+import io.sam.domain.airelation.OutputData
 
-class AIRelationScreenPresenter(view: AIRelationScreenView) extends OutputBoundary{
+class AIRelationScreenPresenter(view: AIRelationScreenView) extends OutputBoundary[OutputData]{
 	private val initState = AIRelationViewModel("Abstractness / Instability Relation", "Instability", "Abstractness", Set(), Set())
 
 	override def deliver(outputData: OutputData): Unit = view.receiveUpdate(

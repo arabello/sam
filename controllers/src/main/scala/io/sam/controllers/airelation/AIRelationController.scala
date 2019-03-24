@@ -4,11 +4,12 @@ import java.io.FileNotFoundException
 import java.nio.file.Path
 
 import io.sam.controllers._
-import io.sam.domain.airelation.{InputBoundary, InputData}
+import io.sam.domain.InputBoundary
+import io.sam.domain.airelation.InputData
 
 import scala.io.Source
 
-class AIRelationController(inputBoundary: InputBoundary) extends AbstractController[List[SoftwareModule]] {
+class AIRelationController(inputBoundary: InputBoundary[InputData]) extends AbstractController[List[SoftwareModule]] {
 	private val acceptedFileExt = "scala"
 	private val extensionRegExp = """.*\.(\w+)""".r
 
