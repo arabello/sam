@@ -45,7 +45,8 @@ class AIRelationTest extends FlatSpec{
 				assert(true)
 			}
 		}
-		new AIRelationUseCase(presenter).measure(inputData)
+		val ai = new AIRelationUseCase(presenter)
+		ai.measure(inputData)
 	}
 
 	it should "calculate abstractness, instability and distance" in{

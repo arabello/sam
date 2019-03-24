@@ -1,5 +1,3 @@
 package io.sam.domain.levelsmap
 
-class OutputData {
-
-}
+case class OutputData(levels: List[Set[Dependency]])
