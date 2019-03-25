@@ -9,7 +9,7 @@ import org.scalatest.FlatSpec
 import scala.io.Source
 
 class AIRelationTest extends FlatSpec{
-	val resPath = "domain/src/test/resources"
+	val resPath = "domain/src/test/resources/airelation"
 
 	val abstractness: Map[String, Double] = Map(
 		"Ca" -> 0.0,
@@ -32,7 +32,7 @@ class AIRelationTest extends FlatSpec{
 		"Cd" -> 0.0
 	)
 
-	"AIRelationInteractor" should "submit modules and deliver response" in{
+	"AIRelationUseCase" should "submit modules and deliver response" in{
 		val inputData = InputData(Map(
 			"Ca" -> Set(("q", Source.fromFile(new File(s"$resPath/q"))), ("r", Source.fromFile(new File(s"$resPath/r")))),
 			"Cb" -> Set(("s", Source.fromFile(new File(s"$resPath/s")))),

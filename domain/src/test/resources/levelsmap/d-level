@@ -1,0 +1,14 @@
+package level.d.d1{
+    import level.c.c1.C1
+    class D1 {}
+}
+
+package level.d.d2{
+    import level.c.c2._
+    class D2 {}
+}
+
+package level.d.d3{
+    import level.c.c3.{C3}
+    class D3 {}
+}

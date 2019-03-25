@@ -1,0 +1,11 @@
+package level.a.a1{
+    class A1 {}
+}
+
+package level.a.a2{
+    class A2 {}
+}
+
+package level.a.a3{
+    class A3 {}
+}

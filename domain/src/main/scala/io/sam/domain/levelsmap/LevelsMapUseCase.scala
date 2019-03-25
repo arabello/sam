@@ -3,7 +3,9 @@ package io.sam.domain.levelsmap
 import io.sam.core.{Analyzer, Code, CodeFactory, Component}
 import io.sam.domain.{InputBoundary, OutputBoundary}
 
-class LevelsMapInteractor(out: OutputBoundary[OutputData]) extends InputBoundary[InputData] with CodeFactory{
+import scala.annotation.tailrec
+
+class LevelsMapUseCase(out: OutputBoundary[OutputData]) extends InputBoundary[InputData] with CodeFactory{
 	override def measure(data: InputData): Unit = {
 		var submittedModules = Set[Component]()
 
@@ -17,8 +19,8 @@ class LevelsMapInteractor(out: OutputBoundary[OutputData]) extends InputBoundary
 
 		val rawDeps = for{
 			comp <- submittedModules
+			ast = Analyzer.parseCode(comp) // TODO Critical: Analyzer.parseCode HAS TO BE INVOKED before traverser instance. Refactor to hide from client side this behaviour
 			traverser = new LevelsMapTraverser(comp)
-			ast = Analyzer.parseCode(comp)
 			_ = traverser.traverse(ast)
 		} yield traverser.rawDependency
 
@@ -71,14 +73,15 @@ class LevelsMapInteractor(out: OutputBoundary[OutputData]) extends InputBoundary
 	private def orderDeps(dependencies: Set[Dependency]): List[Set[Dependency]] = {
 		val firstLevel = dependencies.filter(d => d.out.isEmpty)
 
-		def orderDepsRec(upperLevel: Set[Dependency]): List[Set[Dependency]] = {
+		@tailrec
+		def orderDepsRec(upperLevel: Set[Dependency], acc: List[Set[Dependency]]): List[Set[Dependency]] = { // TODO Fix
 			val currLevel = dependencies.filter(d => d.out.intersect(for{ dep <- upperLevel} yield dep.module).nonEmpty)
 			if (currLevel.isEmpty)
 				List(currLevel)
 			else
-				orderDepsRec(currLevel) :+ currLevel
+				orderDepsRec(currLevel, acc :+ currLevel)
 		}
 
-		firstLevel +: orderDepsRec(firstLevel)
+		firstLevel +: orderDepsRec(firstLevel, List())
 	}
 }
