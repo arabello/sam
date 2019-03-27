@@ -1,59 +1,53 @@
 package io.sam.domain.airelation
 
-import io.sam.core.{Analyzer, Code, CodeFactory, Component}
+import io.sam.core._
 import io.sam.domain.{InputBoundary, OutputBoundary}
 
-class AIRelationUseCase(out: OutputBoundary[OutputData]) extends InputBoundary[InputData] with CodeFactory {
-
+class AIRelationUseCase(out: OutputBoundary[OutputData]) extends Analyzer with InputBoundary[InputData] with CodeFactory {
 	override def measure(data: InputData): Unit = {
-		var submittedModules = Set[Component]()
 
-		data.components foreach { case (name, resources) =>
-			var sources = Set[Code]()
-			resources foreach { case (id, src) =>
-				sources += mkCodeFromSource(id, src)
-			}
-			submittedModules += Component(name, sources)
-		}
+		val analyzedModules = data.components.map{
+			case (name, resources) =>
+				val sc = resources.map{ case (id, src) => mkCodeFromSource(id, src) }
+				val c = Component(name, sc)
+				analyze(c)(new AIRelationTraverser()).results(c)
+		}.toSet
 
-		var measuredModules = Set[MeasuredModule]()
-		val analizedModules = analize(submittedModules)
-
-		analizedModules foreach{ current =>
+		val measuredModules = analyzedModules.map{ current =>
 			val A = current.abstractness
-			val others = analizedModules.filter(m => m != current)
+			val others = analyzedModules.filter(m => m != current)
 			val I = current.instability(others)
 			val D = scala.math.abs(A + I - 1)
-			measuredModules += MeasuredModule(current.code.id, A, I, D)
+			MeasuredModule(current.code.id, A, I, D)
 		}
 
 		out.deliver(OutputData(measuredModules))
 	}
 
-	private class AIRelationTraverser(module: Component) extends Analyzer.Traverser{
+	private class AIRelationTraverser extends Traverser {
 		private var packages = Set[String]()
-		private var imports = Set[Analyzer.Import]()
+		private var imports = Set[Import]()
 		private var numClasses = 0
 		private var numAbstractClasses = 0
 
-		override def traverse(tree: Analyzer.Tree): Unit = tree match {
-			case Analyzer.ModuleDef(mods, name, impl) =>
+		override def traverse(tree: Tree): Unit = tree match {
+			case ModuleDef(mods, name, impl) =>
 				numClasses += 1
 
 				super.traverse(impl)
-			case Analyzer.ClassDef(mods, name, tparams, impl) =>
-				if (mods.hasFlag(Analyzer.Flag.ABSTRACT))
+			case ClassDef(mods, name, tparams, impl) =>
+				if (mods.hasFlag(Flag.ABSTRACT))
 					numAbstractClasses += 1
 
 				numClasses += 1
 				super.traverseTrees(tparams)
 				super.traverse(impl)
-			case node @ Analyzer.Import(expr, selectors) =>
+			case node @ Import(expr, selectors) =>
 
 				imports += node
 
 				super.traverse(expr)
-			case node @ Analyzer.PackageDef(pid, stats) =>
+			case node @ PackageDef(pid, stats) =>
 
 				packages += pid.toString()
 
@@ -62,19 +56,55 @@ class AIRelationUseCase(out: OutputBoundary[OutputData]) extends InputBoundary[I
 			case _ => super.traverse(tree)
 		}
 
-		def analizedModule: AnalizedModule = AnalizedModule(module, packages, imports, numClasses, numAbstractClasses)
+		def results(module: Component): AnalyzedModule = AnalyzedModule(module, packages, imports, numClasses, numAbstractClasses)
 	}
 
-	private def analize(modules: Set[Component]): Set[AnalizedModule] = {
-		var result = Set[AnalizedModule]()
+	private case class AnalyzedModule(code: Component, packages: Set[String], imports: Set[Import], numClasses: Int, numAbstractClasses: Int){
+		/*
+			For "import io.pck.b.A\n":
+			expr >> io.pck.b
+			selectors >> List(ImportSelector(TermName("A"), 33, TermName("A"), 33))
+			----
+			For "import io.pck.b._\n":
+			expr >> io.pck.b
+			selectors >> List(ImportSelector(termNames.WILDCARD, 51, null, -1))
+			----
+			For "import io.pck.b.{h => A}\n":
+			expr >> io.pck
+			selectors >> List(ImportSelector(TermName("h"), 68, TermName("A"), 73))
+		*/
 
-		modules foreach{ module =>
-			val ast = Analyzer.parseCode(module)
-			val traverser = new AIRelationTraverser(module)
-			traverser.traverse(ast)
-			result += traverser.analizedModule
+		private def numDependencies(on: AnalyzedModule): Int = {
+			var nDeps = 0
+
+			imports foreach{ imp =>
+
+				on.packages foreach{ pck =>
+					if (imp.expr.toString().contains(pck)){
+						nDeps += imp.selectors.size
+						imp.selectors foreach{ selector =>
+							if (selector.name == AIRelationUseCase.this.termNames.WILDCARD)
+								nDeps += on.numClasses - 1
+						}
+					}
+				}
+			}
+
+			nDeps
 		}
 
-		result
+		def instability(others: Set[AnalyzedModule]): Float = {
+			var fanin = 0
+			var fanout = 0
+
+			others foreach{ other =>
+				fanin += other.numDependencies(this)
+				fanout += numDependencies(other)
+			}
+
+			fanout.toFloat / (fanin + fanout) // instability formula
+		}
+
+		def abstractness: Float =  numAbstractClasses.toFloat / numClasses // abstractness formula
 	}
 }

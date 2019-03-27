@@ -3,18 +3,15 @@ package io.sam.core
 import scala.tools.nsc.reporters.StoreReporter
 import scala.tools.nsc.{Global, Settings}
 
-object Analyzer extends Global(new Settings, new StoreReporter) {
-
+abstract class Analyzer extends Global(new Settings, new StoreReporter) {
 	settings.embeddedDefaults(getClass.getClassLoader)
 	settings.usejavacp.value = true
 
-	def parse(content: String): Tree = {
-		val run = new Run()
-		phase = run.parserPhase
-		run.cancel()
+	val run = new Run()
+	phase = run.parserPhase
 
-		newUnitParser(content).parse()
+	protected def analyze[T <: Traverser](code: Code)(implicit traverser: T): T = {
+		traverser.traverse(newUnitParser(code.content).parse())
+		traverser
 	}
-
-	def parseCode(code: Code): Tree = parse(code.content)
 }
