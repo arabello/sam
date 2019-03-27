@@ -30,7 +30,7 @@ class LayersMapTest extends FlatSpec{
 		lm.measure(inputData)
 	}
 
-	it should "calculate levels map" in{
+	it should "calculate layers map" in{
 		object presenter extends OutputBoundary[OutputData]{
 			override def deliver(outputData: OutputData): Unit = {
 				assert(outputData.layers.size == 4)
